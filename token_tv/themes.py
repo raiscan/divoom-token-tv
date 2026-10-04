@@ -507,3 +507,16 @@ def render_gameboy(snapshot):
 
 
 RENDERERS = {'gameboy': render_gameboy, 'digital': render_digital, 'neon': render_neon, 'retro': render_retro, 'hud': render_hud}
+
+
+def render_local_undertale(snapshot):
+    from token_tv.local_games import render_stock
+    return render_stock(snapshot, 'undertale')
+
+
+def render_local_deltarune(snapshot):
+    from token_tv.local_games import render_stock
+    return render_stock(snapshot, 'deltarune')
+
+
+RENDERERS.update(undertale=render_local_undertale, deltarune=render_local_deltarune)

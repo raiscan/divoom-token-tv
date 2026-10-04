@@ -305,6 +305,9 @@ def render_images(snapshot, style='digital', timezone='Europe/London', now=None,
         raise ValueError('Unknown display style')
     now = time.time() if now is None else now
     date = datetime.fromtimestamp(now, ZoneInfo(timezone))
+    if style in ('undertale', 'deltarune'):
+        from token_tv.local_games import render_panel
+        return [render_panel(p, snapshot, style, now, phase, timezone) for p in panel_data(snapshot, now)]
     return [(retro_panel(p, snapshot, date, now) if style == 'retro'
              else instrument_panel(p, snapshot, date, now, style, phase))
             for p in panel_data(snapshot, now)]
@@ -323,7 +326,7 @@ def encode(image, animated=None):
 def render_panels(snapshot, style='digital', timezone='Europe/London', now=None):
     now = time.time() if now is None else now
     images = render_images(snapshot, style, timezone, now)
-    if style != 'space':
+    if style not in ('space', 'undertale', 'deltarune'):
         return [encode(image) for image in images]
     phases = [images] + [render_images(snapshot, style, timezone, now, phase)
                          for phase in range(1, ANIMATION_FRAMES)]
@@ -332,7 +335,7 @@ def render_panels(snapshot, style='digital', timezone='Europe/London', now=None)
 
 def render_preview(snapshot, style='digital', timezone='Europe/London', now=None):
     now = time.time() if now is None else now
-    phases = ANIMATION_FRAMES if style == 'space' else 1
+    phases = ANIMATION_FRAMES if style in ('space', 'undertale', 'deltarune') else 1
     images = []
     for phase in range(phases):
         preview = Image.new('RGB', (640, 128))

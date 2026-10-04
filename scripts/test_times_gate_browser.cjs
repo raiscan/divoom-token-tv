@@ -15,7 +15,8 @@ fs.mkdirSync(out, {recursive:true});
   await page.goto(url);
   await page.waitForSelector('.gallery[data-device=times-gate] .theme-card[data-id=gameboy]');
   const styles = (await (await page.request.get(url+'/display')).json()).styles;
-  assert.equal(styles.length, 7); assert(styles.includes('gameboy'));
+  assert(styles.length >= 7); assert(styles.includes('gameboy'));
+  for (const style of styles) assert.equal(await page.locator(`.theme-card[data-id=${style}]`).count(),1);
   for (const thumb of await page.locator('.theme-thumb').all()) await thumb.scrollIntoViewIfNeeded();
   await page.waitForFunction(() => [...document.querySelectorAll('.theme-thumb')].every(i => i.complete && i.naturalWidth === 640 && i.naturalHeight === 128));
   const dimensions = await page.locator('.theme-thumb').evaluateAll(nodes => nodes.map(i => {const r=i.getBoundingClientRect();return [r.width,r.height]}));
@@ -27,6 +28,8 @@ fs.mkdirSync(out, {recursive:true});
    assert.equal(await page.locator('#clock-style').inputValue(),style);
    assert.equal(await page.locator('#frame').evaluate(i=>{const r=i.getBoundingClientRect();return Math.abs(r.width/r.height-5)<.01}),true);
   }
+  await page.locator('#clock-style').selectOption('gameboy');
+  await page.waitForFunction(() => {const i=document.querySelector('#frame');return i.complete && i.currentSrc.includes('style=gameboy')});
   assert.equal(posts,0,'gallery previews must not change the physical clock');
   await page.screenshot({path:`${out}/gameboy-preview.png`,fullPage:true});
   for (const width of [320,375,768,1024,1440]) {
@@ -40,6 +43,6 @@ fs.mkdirSync(out, {recursive:true});
   await page.waitForFunction(()=>document.querySelector('#display-state').textContent==='Image sent · Game Boy');
   assert.deepEqual(errors,[]);
   fs.writeFileSync(`${out}/result.json`,JSON.stringify({styles,widths:[320,375,768,1024,1440],previewDoesNotApply:true,pageErrors:errors,passed:true},null,2));
-  console.log('PASS: seven native appearances, wide five-screen gallery, five widths, preview/apply separation, no browser errors.');
+  console.log(`PASS: ${styles.length} native appearances, wide five-screen gallery, five widths, preview/apply separation, no browser errors.`);
  } finally {await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

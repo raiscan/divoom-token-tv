@@ -240,7 +240,7 @@ def render_panel(panel,snapshot,style,now,phase=0,timezone='Europe/London'):
 
 
 def render_account(row, now, phase=0, style='deltarune'):
-    """One subscription owns two quota rows and two independent reset timers."""
+    """Show reported quotas; one limit gives its portrait and meter more room."""
     from token_tv.themes import ACCENT, bot_sprite
     canvas = Image.new('RGB', (128, 128), '#050008' if style == 'deltarune' else '#050b16')
     draw = ImageDraw.Draw(canvas)
@@ -258,37 +258,47 @@ def render_account(row, now, phase=0, style='deltarune'):
     draw.rectangle((5, 5, 122, 22), fill='#050008')
     heart(draw, 8, 8)
     label(draw, (20, 8), row['alias'], width=100)
-    if style in ('undertale', 'deltarune'):
-        name = ({'claude':'susie', 'codex':'kris', 'grok':'ralsei'} if style == 'deltarune'
-                else {'claude':'papyrus', 'codex':'sans', 'grok':'toriel'})[row['provider']]
-        from token_tv.party_actions import put_character
-        if style != 'deltarune' or not put_character(canvas,name,row.get('key',row['alias']),now,phase,(7,27,61,65)):
-            put_sprite(canvas, name, (8, 26, 55, 65), phase % FRAMES, True)
-    else:
-        art = bot_sprite(row['provider'], 30, 46)
-        canvas.paste(art, (9, 30), art)
     windows = {window['label']: window for window in row.get('windows', [])} if row['status'] in ('ok', 'stale') else {}
     choices = [(windows.get('5H'), '5H'), (windows.get('WEEK'), '1W')]
     if row['provider'] == 'grok':
         reported = list(windows.values())[:2]
         choices = [(reported[i] if i < len(reported) else None,
                     reported[i]['label'] if i < len(reported) else '--') for i in range(2)]
+    # Presence, rather than truthiness of the reading, determines the layout.
+    # Unknown percentages and real zeroes still own their reported quota slot.
+    reported = [(window, period) for window, period in choices if window is not None]
+    single = len(reported) == 1
+    if single:
+        choices = reported
+    portrait_height = 78 if single else 65
+    if style in ('undertale', 'deltarune'):
+        name = ({'claude':'susie', 'codex':'kris', 'grok':'ralsei'} if style == 'deltarune'
+                else {'claude':'papyrus', 'codex':'sans', 'grok':'toriel'})[row['provider']]
+        from token_tv.party_actions import put_character
+        if style != 'deltarune' or not put_character(canvas,name,row.get('key',row['alias']),now,phase,(7,27,61,portrait_height)):
+            put_sprite(canvas, name, (8, 26, 55, portrait_height), phase % FRAMES, True)
+    else:
+        art = bot_sprite(row['provider'], 39 if single else 30, 60 if single else 46)
+        canvas.paste(art, (9, 30), art)
     old = row['status'] == 'stale'
     ink = {'claude':'#ff4fdc', 'codex':CYAN, 'grok':'#7cff8b'}[row['provider']] if style == 'deltarune' else color
-    label(draw, (120, 20), 'USED', color=ink, align='right')
+    label(draw, (120, 30 if single else 20), 'USED %' if single else 'USED', color=ink, align='right')
     for index, (window, period) in enumerate(choices):
-        y = 31 + index * 32
+        y = 43 if single else 31 + index * 32
         used = window['used_percent'] if window else None
-        draw.rectangle((73, y - 2, 121, y + 24), fill='#050008')
-        label(draw, (120, y), f'{used:.0f}%' if used is not None else '--', 2, align='right', width=75)
+        draw.rectangle((69 if single else 73, y - 2, 121, 90 if single else y + 24), fill='#050008')
+        value = f'{used:.0f}' + ('' if single else '%') if used is not None else '--'
+        label(draw, (120, y), value, 3 if single else 2, align='right', width=54 if single else 75)
         text = duration(window, now)
         text_width = min(len(text), 7) * 6 - 1
-        reset_icon(draw, 120 - text_width - 12, y + 17)
-        label(draw, (120, y + 18), text, align='right', width=42)
-        bar_y = 96 + index * 16
-        draw.rectangle((6, bar_y - 1, 121, bar_y + 11), fill='#050008')
-        label(draw, (8, bar_y + 2), period[:3], color=ink, width=18)
-        used_bar(draw, (28, bar_y, 120, bar_y + 10), used, ink, old)
+        reset_y = 78 if single else y + 17
+        reset_icon(draw, 120 - text_width - 12, reset_y)
+        label(draw, (120, reset_y + 1), text, align='right', width=42)
+        bar_y = 108 if single else 96 + index * 16
+        bar_height = 13 if single else 10
+        draw.rectangle((6, bar_y - 1, 121, bar_y + bar_height + 1), fill='#050008')
+        label(draw, (8, bar_y + (4 if single else 2)), period[:3], color=ink, width=18)
+        used_bar(draw, (28, bar_y, 120, bar_y + bar_height), used, ink, old)
     if old:
         label(draw, (8, 20), 'OLD', color=GOLD)
     elif row['status'] not in ('ok', 'stale'):

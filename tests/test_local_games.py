@@ -62,6 +62,71 @@ class LocalGameFacesTests(unittest.TestCase):
                     for panel in panel_data(data, NOW):
                         self.assertEqual(render_panel(panel, data, style, NOW, 3).size, (128, 128))
 
+    def test_one_reported_limit_reclaims_the_unused_meter_in_every_appearance(self):
+        from token_tv import local_games
+        for style in ('undertale', 'deltarune', 'pixel', 'digital', 'neon', 'retro', 'hud', 'space', 'gameboy'):
+            with self.subTest(style=style), patch('token_tv.local_art.ART_ROOT', self.root):
+                with patch.object(local_games, 'used_bar', wraps=local_games.used_bar) as meters:
+                    local_games.render_account(self.data['accounts']['claude_a'], NOW, style=style)
+                    self.assertEqual([call.args[2] for call in meters.call_args_list], [72, 38])
+                    dual_height = meters.call_args.args[1][3] - meters.call_args.args[1][1]
+                for period in ('WEEK', '5H'):
+                    row = copy.deepcopy(self.data['accounts']['codex_a'])
+                    row['windows'][0]['label'] = period
+                    with patch.object(local_games, 'used_bar', wraps=local_games.used_bar) as meters, \
+                         patch.object(local_games, 'label', wraps=local_games.label) as labels:
+                        image = local_games.render_account(row, NOW, style=style)
+                    self.assertEqual(image.size, (128, 128))
+                    self.assertEqual(meters.call_count, 1)
+                    self.assertEqual(meters.call_args.args[2], 55)
+                    box = meters.call_args.args[1]
+                    self.assertGreater(box[3] - box[1], dual_height)
+                    texts = [call.args[2] for call in labels.call_args_list]
+                    self.assertIn('1W' if period == 'WEEK' else '5H', texts)
+                    self.assertNotIn('5H' if period == 'WEEK' else '1W', texts)
+
+    def test_single_limit_keeps_unknown_zero_old_and_failed_accounts_honest(self):
+        from token_tv import local_games
+        images = []
+        for status, used in (('ok', None), ('ok', 0), ('stale', 55), ('auth_required', 55)):
+            row = copy.deepcopy(self.data['accounts']['codex_a'])
+            row.update(status=status)
+            row['windows'][0]['used_percent'] = used
+            with patch('token_tv.local_art.ART_ROOT', self.root), \
+                 patch.object(local_games, 'used_bar', wraps=local_games.used_bar) as meters, \
+                 patch.object(local_games, 'label', wraps=local_games.label) as labels:
+                images.append(local_games.render_account(row, NOW).tobytes())
+            self.assertEqual([call.args[2] for call in meters.call_args_list],
+                             [None, None] if status == 'auth_required' else [used])
+            self.assertTrue(all(call.args[4] == (status == 'stale') for call in meters.call_args_list))
+            texts = [call.args[2] for call in labels.call_args_list]
+            if status == 'stale': self.assertIn('OLD', texts)
+            if used is None or status == 'auth_required': self.assertIn('--', texts)
+            if used == 0: self.assertIn('0', texts)
+        self.assertEqual(len(set(images)), 4)
+        row = dict(self.data['accounts']['codex_a'], windows=[])
+        with patch('token_tv.local_art.ART_ROOT', self.root), \
+             patch.object(local_games, 'used_bar', wraps=local_games.used_bar) as meters:
+            local_games.render_account(row, NOW)
+        self.assertEqual([call.args[2] for call in meters.call_args_list], [None, None])
+
+    def test_single_budget_and_larger_original_actor_use_the_same_adaptive_layout(self):
+        from token_tv import local_games
+        row = copy.deepcopy(self.data['accounts']['codex_a'])
+        with patch('token_tv.local_art.ART_ROOT', self.root), \
+             patch('token_tv.party_actions.put_character', return_value=True) as actor:
+            local_games.render_account(self.data['accounts']['claude_a'], NOW)
+            dual_height = actor.call_args.args[-1][3]
+            local_games.render_account(row, NOW)
+            self.assertGreater(actor.call_args.args[-1][3], dual_height)
+        row.update(provider='grok', alias='GROK A')
+        row['windows'][0]['label'] = 'BUDGET'
+        with patch('token_tv.local_art.ART_ROOT', self.root), \
+             patch.object(local_games, 'used_bar', wraps=local_games.used_bar) as meters:
+            local_games.render_account(row, NOW)
+        self.assertEqual(meters.call_count, 1)
+        self.assertEqual(meters.call_args.args[2], 55)
+
     def test_full_strips_use_native_animated_payloads_and_stock_faces_stay_240px(self):
         from token_tv import times_gate_faces
         from token_tv.local_games import render_stock

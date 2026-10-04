@@ -18,7 +18,13 @@ This installation now uses **one screen per subscription**: Claude's 5-hour and
 weekly windows share screen 1, and Codex's windows share screen 2. Each row has
 its own horizontal **USED** bar and reset countdown. The two bars are stacked at the
 bottom with **5H** and **1W** aligned at the far left. The percentages and reset times
-follow the same top-to-bottom order. Unreported windows stay `--`.
+follow the same top-to-bottom order. When only one limit is reported (such as
+Codex's weekly limit), its screen uses a larger percentage, taller meter and larger
+character, without reserving an empty row for the other limit. The period remains
+beside the bar and the looping-clock icon marks its reset countdown. This adaptive
+layout also applies to the other Times Gate appearances. A reported limit with a
+missing reading still shows `--`; a real zero remains zero. Failed accounts keep
+their visible status and unknown meters, while cached readings remain marked `OLD`.
 Reset timers use a small looping-clock icon. Larger original battle sprites perform
 three four-second clips in a twelve-second loop, choosing a shuffled action order
 for each account each minute. The same account/minute selects the same sequence

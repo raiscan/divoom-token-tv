@@ -31,11 +31,21 @@ from the bundled example. Space animates stars and helmeted mascots in a four-se
 
 The gallery and clock preview show the complete 640×128 strip. Selecting **Preview** never
 changes the physical display; **Apply to clock** sends your choice. This installation keeps
-Pixel Retro selected. Source Game Boy images use exactly four shades; JPEG transport can
+the selected appearance. Source Game Boy images use exactly four shades; JPEG transport can
 introduce small colour variations on the physical LCDs.
 Provider usage refreshes every five minutes, while the clock and reset timers update every
 minute. Unchanged panels are resent after five minutes to recover from missed updates;
 a changed device picture ID triggers immediate reassertion on the next minute tick.
+Frames are paced by 100 milliseconds. Interrupted frames are replayed with the same
+picture ID and offset, at most twice, for connection resets/timeouts or the firmware's
+intermittent `Request data illegal json` response. Other errors remain failures, and
+every frame still requires a numeric success response before delivery is recorded.
+JPEG entropy optimization reduces upload size without changing decoded pixels.
+With local action clips installed, Deltarune uses 24 frames per subscription/status
+screen, 8 for the Dark Fountain, and 16 for weather: 96 frames across the five LCDs.
+All use 500-millisecond frames, preserving twelve-second action loops, the four-second
+fountain and the eight-second forecast. The earlier 192-frame set caused an observed
+device reboot when screen 5 allocated its animation; the smaller set avoids that load.
 
 The transport follows the working JPEG/LCD targeting approach in
 [Divoom Gaming Gate](https://github.com/adiastra/divoom-gaming-gate).
@@ -125,7 +135,7 @@ node --check token_tv/web/app.js
 ```
 
 `tests/test_times_gate.py` uses a local HTTP device fixture: native JPEG and animated GIF payloads, screen targeting,
-picture ID ordering, reboots, periodic recovery, device error handling, backup identity,
+picture ID ordering, reboots, periodic recovery, bounded frame retries, device error handling, backup identity,
 unknown/stale data, overflow rotation, configuration validation and dashboard preview. `tests/test_times_gate_faces.py` covers
 artwork proportions, unknown/stale states across appearances, the Game Boy palette, animated
 previews and the full Game Boy preview/apply flow. `scripts/test_times_gate_browser.cjs` checks

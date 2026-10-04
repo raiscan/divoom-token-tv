@@ -23,7 +23,8 @@ Reset timers use a small looping-clock icon. Larger original battle sprites perf
 three four-second clips in a twelve-second loop, choosing a shuffled action order
 for each account each minute. The same account/minute selects the same sequence
 for the physical device and preview. Actions include idle, ACT, defend and Ralsei's
-pacify spell. Extra weapon/spell effects are clipped to the portrait area at the
+pacify spell. Native animations use two frames per second to keep the complete
+five-screen set within the clock's memory. Extra weapon/spell effects are clipped to the portrait area at the
 original proportions, keeping the character readable without covering the quota.
 Screen 3 is the Dark Fountain clock, screen 4 is Ralsei's party status, and screen 5
 is Elnina and Lanino's live weather broadcast. Additional accounts rotate as whole
@@ -116,8 +117,8 @@ node --check token_tv/web/app.js
 check optional installation, all panel roles, unknown/zero/stale readings,
 local-only loading and native animation payloads. `tests/test_weather.py` covers
 forecast normalization, zero/unknown/stale states, outages, date selection, private
-location-bound caching, paired quota windows, account rotation, and the full 32-frame
-weather transport and preview, and shuffled original action clips with a 96-frame
+location-bound caching, paired quota windows, account rotation, and the full 16-frame
+weather transport and preview, and shuffled original action clips with a 48-frame
 combined preview that preserves both native loop timings. The Times Gate browser checks
 include every installed appearance and verify the complete five-screen strip.
 Battle-weather checks cover condition-specific symbols, night/unknown states,

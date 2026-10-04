@@ -22,6 +22,10 @@ class LocalTokenRequired(ValueError):
     """The device requires its app-provided local credential."""
 
 
+class RetryableFrameError(ValueError):
+    """Firmware occasionally rejects a valid frame during a long upload."""
+
+
 def screen_selection(value):
     try:
         panels = tuple(int(part) for part in value.split(','))
@@ -82,6 +86,8 @@ class TimesGateDisplay(PhotoDisplay):
         reply = json.loads(raw)
         if isinstance(reply, dict) and reply.get('error_code') == 'DeviceToken is err':
             raise LocalTokenRequired('Enter Local Token from the Times Gate device settings')
+        if name == 'Draw/SendHttpGif' and isinstance(reply, dict) and reply.get('error_code') == 'Request data illegal json':
+            raise RetryableFrameError('Times Gate interrupted a frame upload')
         if not isinstance(reply, dict) or type(reply.get('error_code')) is not int or reply['error_code'] != 0:
             raise ValueError('Times Gate rejected the command')
         return reply
@@ -121,7 +127,7 @@ class TimesGateDisplay(PhotoDisplay):
                     animation = []
                     for frame in ImageSequence.Iterator(image):
                         output = io.BytesIO()
-                        frame.convert('RGB').save(output, format='JPEG', quality=95, subsampling=0)
+                        frame.convert('RGB').save(output, format='JPEG', quality=95, subsampling=0, optimize=True)
                         animation.append(output.getvalue())
                     prepared.append((animation, speed))
         now = time.monotonic() if now is None else now
@@ -150,9 +156,21 @@ class TimesGateDisplay(PhotoDisplay):
             self.pic_id += 1
             animation, speed = prepared[panel]
             for offset, frame in enumerate(animation):
-                self.command('Draw/SendHttpGif', LcdArray=[int(i == panel) for i in range(5)],
-                             PicNum=len(animation), PicOffset=offset, PicID=self.pic_id, PicSpeed=speed,
-                             PicWidth=128, PicData=base64.b64encode(frame).decode('ascii'))
+                fields = dict(LcdArray=[int(i == panel) for i in range(5)],
+                              PicNum=len(animation), PicOffset=offset, PicID=self.pic_id, PicSpeed=speed,
+                              PicWidth=128, PicData=base64.b64encode(frame).decode('ascii'))
+                for attempt in range(3):
+                    try:
+                        self.command('Draw/SendHttpGif', **fields)
+                        break
+                    except (RetryableFrameError, ConnectionResetError, TimeoutError):
+                        if attempt == 2:
+                            raise
+                        # Replay the same frame/id/offset; a numeric success is
+                        # still required before advancing or recording delivery.
+                        time.sleep(.25 * (attempt + 1))
+                # Give the device time to consume a frame before sending another.
+                time.sleep(.1)
             # A partial animation never counts as a delivered panel.
             self.sent[panel] = (digest, now)
             receipts.append({'panel': panel + 1, 'pic_id': self.pic_id, 'bytes': len(body),

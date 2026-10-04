@@ -83,6 +83,8 @@ def degrees(value):
 
 
 def render_panel(weather, now, phase=0):
+    # Keep forecast motion in sync with the memory-efficient native 2 fps loop.
+    phase = (phase // 2) * 2
     canvas = Image.new('RGB', (128, 128), '#050008')
     draw = ImageDraw.Draw(canvas)
     for pos in range(-16, 145, 16):
@@ -133,5 +135,5 @@ def render_panel(weather, now, phase=0):
 
 def render_animation(weather, now):
     from token_tv.times_gate_faces import encode
-    frames = [render_panel(weather, now, phase) for phase in range(FRAMES)]
-    return encode(frames[0], frames[1:])
+    frames = [render_panel(weather, now, phase) for phase in range(0, FRAMES, 2)]
+    return encode(frames[0], frames[1:], duration=500)

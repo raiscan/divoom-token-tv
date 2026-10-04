@@ -30,10 +30,14 @@ def fixture():
 
 class TimesGateTests(unittest.TestCase):
     def setUp(self):
+        delay = patch('token_tv.times_gate.time.sleep')
+        delay.start()
+        self.addCleanup(delay.stop)
         self.calls = []
         self.current_id = 20
         self.error = 0
         self.reject_offset = None
+        self.frame_errors = []
         owner = self
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args):
@@ -44,6 +48,8 @@ class TimesGateTests(unittest.TestCase):
                 reply = {'error_code': owner.error}
                 if data['Command'] == 'Draw/SendHttpGif' and data['PicOffset'] == owner.reject_offset:
                     reply['error_code'] = 'busy'
+                if data['Command'] == 'Draw/SendHttpGif' and owner.frame_errors:
+                    reply['error_code'] = owner.frame_errors.pop(0)
                 if data['Command'] == 'Channel/GetIndex':
                     reply['SelectIndex'] = [0, 1, 0, 2, 0]
                 if data['Command'] == 'Draw/GetHttpGifId':
@@ -147,6 +153,52 @@ class TimesGateTests(unittest.TestCase):
         for now in (0, 300):
             seen.update(p['row']['key'] for p in times_gate.panel_data(data, now=now) if 'row' in p)
         self.assertEqual(seen, {'c', 'x', 'y', 'z'})
+
+    def test_transient_frame_retries_keep_exact_payload_and_require_numeric_ack(self):
+        frames = times_gate.render_panels(fixture(), now=1791079200)
+        device = times_gate.TimesGateDisplay(self.url)
+        self.frame_errors = ['Request data illegal json', 0]
+        with patch('token_tv.times_gate.time.sleep') as pause:
+            self.assertEqual(len(device.publish(frames)), 5)
+        self.assertEqual([call.args for call in pause.call_args_list],[(.25,), *[(.1,)]*5])
+        uploads = [data for _, data in self.calls if data['Command'] == 'Draw/SendHttpGif']
+        self.assertEqual(uploads[0], uploads[1])
+        self.assertEqual(len(uploads), 6)
+        device = times_gate.TimesGateDisplay(self.url)
+        original = device.request
+        sent = []
+        def interrupted(path, data=None, headers=None):
+            if json.loads(data)['Command'] == 'Draw/SendHttpGif':
+                sent.append(data)
+                if len(sent) == 1:
+                    raise ConnectionResetError('synthetic interruption')
+                if len(sent) == 2:
+                    raise TimeoutError('synthetic timeout')
+            return original(path, data, headers)
+        with patch.object(device, 'request', side_effect=interrupted), patch('token_tv.times_gate.time.sleep'):
+            self.assertEqual(len(device.publish(frames)), 5)
+        self.assertEqual(sent[0], sent[1])
+        self.assertEqual(sent[0], sent[2])
+
+    def test_frame_retries_are_bounded_and_never_cache_a_partial_animation(self):
+        frames = times_gate.render_panels(fixture(), now=1791079200)
+        device = times_gate.TimesGateDisplay(self.url)
+        self.frame_errors = ['Request data illegal json'] * 3
+        with patch('token_tv.times_gate.time.sleep') as pause:
+            with self.assertRaises(ValueError):
+                device.publish(frames)
+        uploads = [data for _, data in self.calls if data['Command'] == 'Draw/SendHttpGif']
+        self.assertEqual(len(uploads), 3)
+        self.assertEqual(pause.call_count, 2)
+        self.assertEqual(device.sent, {})
+        self.assertEqual(len(device.publish(frames)), 5)
+        # Authentication errors and unknown responses stay hard failures.
+        for error in ('DeviceToken is err', 'busy', '0', False):
+            self.frame_errors = [error]
+            with patch('token_tv.times_gate.time.sleep') as pause:
+                with self.assertRaises(ValueError):
+                    times_gate.TimesGateDisplay(self.url).publish(frames)
+                pause.assert_not_called()
 
     def test_preview_is_the_same_five_panels_and_config_selects_adapter(self):
         account = {'key': 'c', 'provider': 'claude', 'alias': 'CLAUDE A', 'email': 'test@example.com'}

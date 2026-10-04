@@ -114,12 +114,12 @@ class WeatherTests(unittest.TestCase):
             panels = render_panels(data, 'deltarune', now=NOW)
             weather = Image.open(io.BytesIO(panels[4]))
             preview = Image.open(io.BytesIO(render_preview(data, 'deltarune', now=NOW)))
-            self.assertEqual((weather.n_frames, preview.n_frames), (32, 32))
+            self.assertEqual((weather.n_frames, preview.n_frames), (16, 32))
             self.assertEqual(preview.size, (640, 128))
             for phase in range(32):
-                weather.seek(phase)
+                weather.seek(phase//2)
                 preview.seek(phase)
-                self.assertEqual(weather.info['duration'], 250)
+                self.assertEqual(weather.info['duration'], 500)
                 self.assertEqual(preview.info['duration'], 250)
                 expected = render_panel(data['weather'], NOW, phase)
                 self.assertEqual(weather.convert('RGB').tobytes(), expected.tobytes())
@@ -127,7 +127,7 @@ class WeatherTests(unittest.TestCase):
             for body in panels[:4]:
                 self.assertEqual(Image.open(io.BytesIO(body)).n_frames, 16)
             # Other clock styles still retain the live weather presenter on screen 5.
-            self.assertEqual(Image.open(io.BytesIO(render_panels(data, 'digital', now=NOW)[4])).n_frames, 32)
+            self.assertEqual(Image.open(io.BytesIO(render_panels(data, 'digital', now=NOW)[4])).n_frames, 16)
 
     def test_usage_store_caches_weather_and_does_not_fetch_in_http_snapshot(self):
         from token_tv.state import UsageStore
@@ -208,12 +208,14 @@ class WeatherTests(unittest.TestCase):
             native = Image.open(io.BytesIO(panels[0]))
             weather = Image.open(io.BytesIO(panels[4]))
             preview = Image.open(io.BytesIO(render_preview(data,'deltarune',now=NOW,layout='accounts')))
-            self.assertEqual((native.n_frames, weather.n_frames, preview.n_frames),(48,32,96))
-            for phase in (0, 5, 16, 32, 47, 48, 64, 95):
-                native.seek(phase % 48); weather.seek(phase % 32);preview.seek(phase)
+            self.assertEqual((native.n_frames, weather.n_frames, preview.n_frames),(24,16,48))
+            self.assertEqual(Image.open(io.BytesIO(panels[2])).n_frames,8)
+            self.assertLessEqual(sum(Image.open(io.BytesIO(body)).n_frames for body in panels),96)
+            for phase in (0, 5, 8, 16, 23, 24, 32, 47):
+                native.seek(phase % 24); weather.seek(phase % 16);preview.seek(phase)
                 self.assertEqual(preview.convert('RGB').crop((0,0,128,128)).tobytes(), native.convert('RGB').tobytes())
                 self.assertEqual(preview.convert('RGB').crop((512,0,640,128)).tobytes(), weather.convert('RGB').tobytes())
-                self.assertEqual(preview.info['duration'], 250)
+                self.assertEqual(preview.info['duration'], 500)
 
     def test_battle_weather_symbols_follow_forecast_without_animating_over_readings(self):
         from token_tv.weather_face import BATTLE_SPRITES, battle_available, weather_symbol

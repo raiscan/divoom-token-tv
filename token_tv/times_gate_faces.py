@@ -333,11 +333,11 @@ def render_images(snapshot, style='digital', timezone='Europe/London', now=None,
     return images
 
 
-def encode(image, animated=None):
+def encode(image, animated=None, duration=ANIMATION_SPEED):
     output = io.BytesIO()
     if animated:
         image.save(output, format='GIF', save_all=True, append_images=animated, loop=0,
-                   duration=ANIMATION_SPEED, disposal=2, optimize=False)
+                   duration=duration, disposal=2, optimize=False)
     else:
         image.save(output, format='JPEG', quality=95, subsampling=0)
     return output.getvalue()
@@ -350,13 +350,22 @@ def render_panels(snapshot, style='digital', timezone='Europe/London', now=None,
         result = [encode(image) for image in images]
     else:
         count = ANIMATION_FRAMES
+        step = 1
         if style == 'deltarune' and layout == 'accounts':
             from token_tv.party_actions import available, FRAMES
             if available():
                 count = FRAMES
+                step = 2
         phases = [images] + [render_images(snapshot, style, timezone, now, phase, layout)
-                             for phase in range(1, count)]
-        result = [encode(images[i], [phase[i] for phase in phases[1:]]) for i in range(5)]
+                             for phase in range(step, count, step)]
+        # The clock retains its four-second loop; repeating it three times in
+        # the native upload wastes device memory and network traffic.
+        roles = panel_data(snapshot, now, layout)
+        result = []
+        for i in range(5):
+            period = ANIMATION_FRAMES if style == 'deltarune' and roles[i]['kind'] == 'clock' else count
+            result.append(encode(images[i], [phase[i] for phase in phases[1:period//step]],
+                                 duration=ANIMATION_SPEED*step))
     if snapshot.get('weather') is not None:
         from token_tv.weather_face import render_animation
         result[4] = render_animation(snapshot['weather'], now)
@@ -366,16 +375,18 @@ def render_panels(snapshot, style='digital', timezone='Europe/London', now=None,
 def render_preview(snapshot, style='digital', timezone='Europe/London', now=None, panels=(1, 2, 3, 4, 5), layout='windows'):
     now = time.time() if now is None else now
     phases = ANIMATION_FRAMES if style in ('space', 'undertale', 'deltarune') else 1
+    step = 1
     if style == 'deltarune' and layout == 'accounts':
         from token_tv.party_actions import available, FRAMES
         if available():
             phases = FRAMES
+            step = 2
     if snapshot.get('weather') is not None:
         from math import lcm
         from token_tv.weather_face import FRAMES
         phases = lcm(phases, FRAMES)
     images = []
-    for phase in range(phases):
+    for phase in range(0, phases, step):
         preview = Image.new('RGB', (640, 128))
         for i, panel in enumerate(render_images(snapshot, style, timezone, now, phase, layout)):
             if i + 1 not in panels:
@@ -387,4 +398,4 @@ def render_preview(snapshot, style='digital', timezone='Europe/London', now=None
                     pixel_text(draw, ((128 - (len(text) * 6 - 1)) // 2, y), text, 1, '#b1c6d7')
             preview.paste(panel, (i * 128, 0))
         images.append(preview)
-    return encode(images[0], images[1:] if phases > 1 else None)
+    return encode(images[0], images[1:] if phases > 1 else None, duration=ANIMATION_SPEED*step)

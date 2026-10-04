@@ -1,0 +1,16 @@
+[Unit]
+Description=TokenTV usage panels for Divoom Times Gate
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/code/projects/divoom-token-tv
+ExecStart=%h/code/projects/divoom-token-tv/.venv/bin/python -m token_tv run --config %h/.config/token-tv/times-gate.json
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PYTHONUNBUFFERED=1
+Restart=on-failure
+RestartSec=10
+UMask=0077
+
+[Install]
+WantedBy=default.target

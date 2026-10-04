@@ -106,8 +106,16 @@ class RPC:
 
 def load_config(path):
     data = json.loads(Path(path).read_text())
-    if set(data) - {"accounts", "device_url", "poll_seconds", "font", "display_style"}:
+    if set(data) - {"accounts", "device_url", "poll_seconds", "font", "display_style", "device_type", "timezone"}:
         raise ValueError("Unsupported configuration field")
+    if data.get('device_type', 'photo') not in ('photo', 'times-gate'):
+        raise ValueError('Unknown display device type')
+    if 'timezone' in data:
+        from zoneinfo import ZoneInfo
+        try:
+            ZoneInfo(data['timezone'])
+        except (KeyError, ValueError, TypeError):
+            raise ValueError('Unknown display timezone') from None
     if data.get('display_style', 'pixel') not in STYLES:
         raise ValueError('Unknown display style')
     seen = set()

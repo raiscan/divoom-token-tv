@@ -10,6 +10,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from token_tv.device import FILES, PhotoDisplay
+from token_tv.times_gate import TimesGateDisplay, render_panels, render_preview
 from token_tv.catalog import payload as theme_payload
 from token_tv.display import STYLES, render_page
 from token_tv.web_assets import HTML, ASSETS, asset
@@ -39,7 +40,8 @@ class DisplayPreferences:
     def snapshot(self):
         with self.lock:
             return {'style': self.style, 'applied_style': self.applied_style,
-                    'status': self.status, 'styles': list(STYLES)}
+                    'status': self.status, 'styles': list(STYLES),
+                    'device_type': self.config.get('device_type', 'photo')}
 
     def set_style(self, style):
         if style not in STYLES:
@@ -85,7 +87,9 @@ def handler(store, preferences=None):
                 if style not in STYLES:
                     self.send_error(400, 'Unknown display style')
                     return
-                body = render_page(snapshot, int(path[7]), style)
+                body = (render_preview(snapshot, style, preferences.config.get('timezone', 'Europe/London'))
+                        if preferences and display.get('device_type') == 'times-gate'
+                        else render_page(snapshot, int(path[7]), style))
                 content_type = "image/gif" if body[:4] == b"GIF8" else "image/jpeg"
             elif path == '/themes':
                 body = json.dumps(theme_payload()).encode()
@@ -150,7 +154,8 @@ def main():
     if config.get("font"):
         os.environ["TOKEN_TV_FONT"] = config["font"]
     state_dir = Path(args.state_dir)
-    device = PhotoDisplay(config["device_url"]) if config.get("device_url") else None
+    device_class = TimesGateDisplay if config.get('device_type') == 'times-gate' else PhotoDisplay
+    device = device_class(config['device_url']) if config.get('device_url') else None
     backup_path = state_dir / "display-original.json"
     if args.restore_display:
         if not device or not backup_path.is_file():
@@ -181,17 +186,21 @@ def main():
                     if not backup_path.is_file():
                         write_json(backup_path, original)
                 phase = "upload"
-                image = render_page(snapshot, 0, style)
-                name = FILES[1] if image[:4] == b"GIF8" else FILES[0]
-                digest = hashlib.sha256(image).hexdigest()
-                if (name, digest) != last_upload:  # identical frames are not rewritten to flash
-                    (state_dir / name).write_bytes(image)
-                    receipts.append(dict(device.upload(name, image), sha256=digest))
-                    last_upload = (name, digest)
-                if active_file != name:
-                    phase = "activate"
-                    device.activate(original, name)
-                    active_file = name
+                if isinstance(device, TimesGateDisplay):
+                    frames = render_panels(snapshot, style, config.get('timezone', 'Europe/London'))
+                    receipts = device.publish(frames)
+                else:
+                    image = render_page(snapshot, 0, style)
+                    name = FILES[1] if image[:4] == b"GIF8" else FILES[0]
+                    digest = hashlib.sha256(image).hexdigest()
+                    if (name, digest) != last_upload:  # identical frames are not rewritten to flash
+                        (state_dir / name).write_bytes(image)
+                        receipts.append(dict(device.upload(name, image), sha256=digest))
+                        last_upload = (name, digest)
+                    if active_file != name:
+                        phase = "activate"
+                        device.activate(original, name)
+                        active_file = name
                 write_json(state_dir / "display-receipt.json", {"at": int(time.time()), "style": style, "uploads": receipts})
                 preferences.delivered(style, True)
             except (OSError, ValueError, KeyError) as error:
@@ -221,7 +230,8 @@ def main():
                 print("TokenTV poll failed; retained previous snapshot.", flush=True)
             if refresh:
                 next_refresh = time.monotonic() + interval
-            preferences.changed.wait(max(0, next_refresh - time.monotonic()))
+            preferences.changed.wait(min(60 if isinstance(device, TimesGateDisplay) else interval,
+                                         max(0, next_refresh - time.monotonic())))
 
     thread = threading.Thread(target=poll, daemon=True)
     thread.start()

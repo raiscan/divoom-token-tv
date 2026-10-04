@@ -10,3 +10,7 @@ Your Claude and Codex usage limits on a ~$5 Wi-Fi desk clock. No firmware flashi
 Details: [setup](docs/setup.md) · [compatible clocks](docs/hardware-compatibility.md) · MIT · [한국어](README.ko.md)
 
 <p align="center"><a href="examples/gameboy"><img src="examples/gameboy/comparison.png" width="640" alt="Change a face: original pixel style and a four-colour Game Boy example, rendered from the same sample readings"></a></p>
+
+## Divoom Times Gate adaptation
+
+This private copy adds native five-screen support. See [setup and service controls](docs/times-gate.md).

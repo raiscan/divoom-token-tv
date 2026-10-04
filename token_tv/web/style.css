@@ -189,6 +189,8 @@ h1{margin:0;font:600 48px/1.04 var(--font-display);letter-spacing:-.03em;color:v
 .device{width:fit-content;max-width:100%;margin:0 auto 20px;padding:14px;border-radius:22px;background:linear-gradient(155deg,#34373e,#16181c 58%,#0c0d10);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 -3px 8px rgba(0,0,0,.55),0 22px 34px -20px rgba(0,0,0,.9)}
 .lcd{width:240px;max-width:100%;border-radius:4px;overflow:hidden;background:#000;box-shadow:0 0 0 2px #050607}
 .lcd img{display:block;width:100%;height:auto;aspect-ratio:1;image-rendering:pixelated}
+.lcd.times-gate-lcd{width:640px}
+.lcd.times-gate-lcd img{aspect-ratio:5}
 .clock-panel label{display:block;margin-bottom:8px;font:700 10px/1 var(--font-label);letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
 .clock-panel select{width:100%;margin-bottom:10px}
 .primary{width:100%;margin-bottom:12px}

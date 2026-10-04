@@ -12,6 +12,13 @@ not "probably fine".
 TokenTV never flashes firmware and never deletes your photos. It uploads one picture, switches the
 clock to its photo theme, and `token-tv run --restore-display` puts the original theme back.
 
+## Divoom Times Gate adaptation
+
+The local `/post` API accepted five native 128×128 JPEG panels on a Times Gate from a
+Linux host. Account usage and upload receipts were checked live. The owner confirmed that the
+panels appeared on all five physical LCDs.
+See [Times Gate setup](times-gate.md).
+
 ## Not verified
 
 - Other GeekMagic models, SmallTV Pro, and clones that look the same. A similar case is not evidence

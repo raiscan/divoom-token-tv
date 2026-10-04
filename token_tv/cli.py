@@ -113,7 +113,8 @@ def setup(args):
     except ValueError as error:
         print(error, file=sys.stderr)
         return 1
-    config = {'poll_seconds': 300, 'accounts': accounts, 'display_style': 'digital'}
+    config = {'poll_seconds': 300, 'accounts': accounts, 'display_style': 'digital',
+              'device_type': args.device_type, 'timezone': args.timezone}
     if device:
         config['device_url'] = device
     try:
@@ -247,7 +248,8 @@ def start(args):
         except ValueError as error:
             print(error, file=sys.stderr)
             return 1
-        config = {'poll_seconds': 300, 'accounts': accounts, 'display_style': 'digital'}
+        config = {'poll_seconds': 300, 'accounts': accounts, 'display_style': 'digital',
+                  'device_type': args.device_type, 'timezone': args.timezone}
         if device:
             config['device_url'] = device
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -289,9 +291,13 @@ def main(argv=None):
                        help=f'{provider.title()} account email; repeat for accounts B and C')
     s.add_argument('--isolate', action='store_true',
                    help='give every account its own login home instead of reusing your existing CLI login')
+    s.add_argument('--device-type', choices=('photo', 'times-gate'), default='photo')
+    s.add_argument('--timezone', default='Europe/London', help='clock timezone (IANA name)')
     s.add_argument('--device-url', help='clock address, e.g. http://192.168.0.50')
     s.add_argument('--yes', action='store_true', help='do not ask; use only the flags given')
     st = commands.add_parser('start', parents=[config], help='find your signed-in CLIs, ask for the clock, and run')
+    st.add_argument('--device-type', choices=('photo', 'times-gate'), default='photo')
+    st.add_argument('--timezone', default='Europe/London', help='clock timezone (IANA name)')
     st.add_argument('--device-url', help='clock address, e.g. 192.168.0.50')
     st.add_argument('--yes', action='store_true', help='accept every signed-in account without asking')
     st.add_argument('--no-browser', action='store_true', help='do not open the dashboard in a browser')

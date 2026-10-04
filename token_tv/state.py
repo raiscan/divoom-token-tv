@@ -8,9 +8,10 @@ from token_tv.sources import fetch_account
 
 
 class UsageStore:
-    def __init__(self, accounts, fetch=fetch_account):
+    def __init__(self, accounts, fetch=fetch_account, weather=None):
         self.accounts = accounts
         self.fetch = fetch
+        self.weather = weather
         self.lock = threading.Lock()
         self.updated_at = 0
         self.rows = {a["key"]: {"key": a["key"], "alias": a["alias"], "provider": a["provider"],
@@ -34,6 +35,8 @@ class UsageStore:
                     row["identity_verified"] = previous.get("identity_verified", False)
                 self.rows[row["key"]] = row
             self.updated_at = int(time.time())
+        if self.weather:
+            self.weather.refresh()
 
     def snapshot(self):
         with self.lock:
@@ -50,4 +53,7 @@ class UsageStore:
                 row[prefix + "_percent"] = value.get("used_percent")
                 reset = value.get("resets_at")
                 row[prefix + "_reset_minutes"] = max(0, int((reset - now + 59) // 60)) if reset else None
-        return {"schema": 1, "updated_at": updated, "accounts": rows}
+        result = {"schema": 1, "updated_at": updated, "accounts": rows}
+        if self.weather:
+            result['weather'] = self.weather.snapshot(now)
+        return result

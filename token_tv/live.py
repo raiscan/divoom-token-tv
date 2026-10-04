@@ -28,10 +28,12 @@ def write_json(path, data):
 
 
 class DisplayPreferences:
-    def __init__(self, config_path, config, device=None):
+    def __init__(self, config_path, config, device=None, layout='windows'):
         self.path = Path(config_path)
         self.config = dict(config)
         self.device = device
+        self.forecast_city = config.get('forecast_city')
+        self.layout = layout
         self.style = config.get('display_style', 'pixel')
         self.applied_style = None
         self.status = 'queued' if config.get('device_url') else 'preview_only'
@@ -43,11 +45,14 @@ class DisplayPreferences:
             result = {'style': self.style, 'applied_style': self.applied_style,
                     'status': self.status, 'styles': list(STYLES),
                     'device_type': self.config.get('device_type', 'photo')}
+            result['layout'] = self.layout
             if isinstance(self.device, TimesGateDisplay):
                 result.update(panels=list(self.device.panels),
                               token_entry=bool(self.device.token_file),
                               token_configured=self.device.local_token is not None,
                               weather_clock=self.device.weather_clock)
+            if self.forecast_city:
+                result.update(weather_appearance='deltarune', forecast_city=self.forecast_city)
             return result
 
     def set_token(self, value):
@@ -104,7 +109,8 @@ def handler(store, preferences=None):
                     self.send_error(400, 'Unknown display style')
                     return
                 body = (render_preview(snapshot, style, preferences.config.get('timezone', 'Europe/London'),
-                                       panels=display.get('panels', (1, 2, 3, 4, 5)))
+                                       panels=display.get('panels', (1, 2, 3, 4, 5)),
+                                       layout=display.get('layout', 'windows'))
                         if preferences and display.get('device_type') == 'times-gate'
                         else render_page(snapshot, int(path[7]), style))
                 content_type = "image/gif" if body[:4] == b"GIF8" else "image/jpeg"
@@ -182,19 +188,43 @@ def main():
     parser.add_argument("--state-dir", default=".runtime")
     parser.add_argument("--restore-display", action="store_true")
     parser.add_argument("--times-gate-panels", default='1,2,3,4,5', help='Physical screens controlled by TokenTV')
+    parser.add_argument("--times-gate-layout", choices=('windows', 'accounts'), default='windows',
+                        help='Separate quota windows or one screen per subscription')
     parser.add_argument("--local-token-file", help='Private file for the Times Gate Local Token; enables dashboard entry')
     parser.add_argument("--weather-clock", type=int, help='Existing Divoom weather face ID for reserved screen 5')
     parser.add_argument("--lcd-independence", type=int, help='Existing independent layout ID from Divoom')
+    parser.add_argument("--forecast-city", help='City label for the custom Deltarune weather panel')
+    parser.add_argument("--forecast-latitude", type=float, help='City latitude for Open-Meteo')
+    parser.add_argument("--forecast-longitude", type=float, help='City longitude for Open-Meteo')
     args = parser.parse_args()
+    try:
+        selected_panels = screen_selection(args.times_gate_panels)
+    except ValueError:
+        parser.error('Choose distinct Times Gate screen numbers from 1 to 5')
     config = load_config(args.config)
     if config.get("font"):
         os.environ["TOKEN_TV_FONT"] = config["font"]
     state_dir = Path(args.state_dir)
+    weather = None
+    if args.forecast_city:
+        from token_tv.weather import WeatherStore
+        from token_tv.weather_face import available
+        if (config.get('device_type') != 'times-gate' or args.weather_clock is not None or
+                5 not in selected_panels or not available()):
+            parser.error('Custom weather requires Times Gate screen 5, local host artwork, and no built-in weather face')
+        try:
+            weather = WeatherStore(args.forecast_city, args.forecast_latitude, args.forecast_longitude,
+                                   config.get('timezone', 'Europe/London'), state_dir / 'weather-cache.json')
+        except ValueError:
+            parser.error('Provide the forecast city and valid coordinates')
+        config['forecast_city'] = args.forecast_city
+    elif args.forecast_latitude is not None or args.forecast_longitude is not None:
+        parser.error('Coordinates require a forecast city')
     device = None
     if config.get('device_url'):
         if config.get('device_type') == 'times-gate':
             try:
-                device = TimesGateDisplay(config['device_url'], screen_selection(args.times_gate_panels),
+                device = TimesGateDisplay(config['device_url'], selected_panels,
                                           args.local_token_file, weather_clock=args.weather_clock,
                                           independence=args.lcd_independence)
             except ValueError:
@@ -208,8 +238,8 @@ def main():
         device.restore(json.loads(backup_path.read_text()))
         print("Original display selection restored.")
         return
-    store = UsageStore(config["accounts"])
-    preferences = DisplayPreferences(args.config, config, device)
+    store = UsageStore(config["accounts"], weather=weather)
+    preferences = DisplayPreferences(args.config, config, device, args.times_gate_layout)
     interval = max(60, int(config.get("poll_seconds", 300)))
     stopping = threading.Event()
     original = None
@@ -232,7 +262,8 @@ def main():
                         write_json(backup_path, original)
                 phase = "upload"
                 if isinstance(device, TimesGateDisplay):
-                    frames = render_panels(snapshot, style, config.get('timezone', 'Europe/London'))
+                    frames = render_panels(snapshot, style, config.get('timezone', 'Europe/London'),
+                                           layout=args.times_gate_layout)
                     receipts = device.publish(frames)
                 else:
                     image = render_page(snapshot, 0, style)

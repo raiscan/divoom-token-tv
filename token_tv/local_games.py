@@ -52,6 +52,7 @@ def label(draw, xy, value, scale=1, color=WHITE, align='left', width=114):
     if align == 'center':x -= text_width//2
     elif align == 'right':x -= text_width
     marks = {':': '00000/00100/00100/00000/00100/00100/00000',
+             '+': '00000/00100/00100/11111/00100/00100/00000',
              '/': '00001/00001/00010/00100/01000/10000/10000',
              '*': '00000/10101/01110/11111/01110/10101/00000'}
     for index, character in enumerate(value):
@@ -189,11 +190,6 @@ def _deltarune(panel,snapshot,date,now,phase):
         used=window['used_percent'] if window else None
         label(draw,(120,47),f'{used:.0f}%' if used is not None else '--',scale=3,align='right',width=71)
         label(draw,(120,76),'USED' if used is not None else 'UNKNOWN',align='right',width=67)
-        # A TP-shaped vertical meter, explicitly measuring quota USED.
-        used_bar(draw,(6,34,11,82),None,GOLD)
-        if used is not None:
-            height=round(46*max(0,min(100,used))/100)
-            if height:draw.rectangle((7,82-height,10,81),fill=color)
         label(draw,(120,88),'RESET IN',align='right',width=62)
         used_bar(draw,(7,97,120,103),used,color,old)
         footer(draw,'ACT',duration(window,now),True)
@@ -225,8 +221,65 @@ def _deltarune(panel,snapshot,date,now,phase):
 
 
 def render_panel(panel,snapshot,style,now,phase=0,timezone='Europe/London'):
+    if panel['kind'] == 'account':
+        return render_account(panel['row'], now, phase, style)
     date=datetime.fromtimestamp(now,ZoneInfo(timezone))
     return (_undertale if style=='undertale' else _deltarune)(panel,snapshot,date,now,phase)
+
+
+def render_account(row, now, phase=0, style='deltarune'):
+    """One subscription owns two quota rows and two independent reset timers."""
+    from token_tv.themes import ACCENT, bot_sprite
+    canvas = Image.new('RGB', (128, 128), '#050008' if style == 'deltarune' else '#050b16')
+    draw = ImageDraw.Draw(canvas)
+    color = (PURPLE if style == 'deltarune' else WHITE if style == 'undertale'
+             else ACCENT.get(style, ACCENT['retro'])[row['provider']][0])
+    if style == 'deltarune':
+        for pos in range(-16, 145, 16):
+            draw.line((pos + phase, 24, pos + phase, 104), fill='#240024')
+            if 24 <= pos + phase <= 104:
+                draw.line((4, pos + phase, 123, pos + phase), fill='#240024')
+    elif style == 'retro':
+        from token_tv.times_gate_faces import retro_backdrop
+        canvas.paste(retro_backdrop(row['provider']), (5, 26))
+    draw.rectangle((2, 2, 125, 125), outline=color, width=2)
+    draw.rectangle((5, 5, 122, 22), fill='#050008')
+    heart(draw, 8, 8)
+    label(draw, (20, 8), row['alias'], width=100)
+    if style in ('undertale', 'deltarune'):
+        name = ({'claude':'susie', 'codex':'kris', 'grok':'ralsei'} if style == 'deltarune'
+                else {'claude':'papyrus', 'codex':'sans', 'grok':'toriel'})[row['provider']]
+        put_sprite(canvas, name, (8, 26, 32, 53), phase, True)
+    else:
+        art = bot_sprite(row['provider'], 30, 46)
+        canvas.paste(art, (9, 30), art)
+    windows = {window['label']: window for window in row.get('windows', [])} if row['status'] in ('ok', 'stale') else {}
+    choices = [(windows.get('5H'), '5H'), (windows.get('WEEK'), '1W')]
+    if row['provider'] == 'grok':
+        reported = list(windows.values())[:2]
+        choices = [(reported[i] if i < len(reported) else None,
+                    reported[i]['label'] if i < len(reported) else '--') for i in range(2)]
+    old = row['status'] == 'stale'
+    ink = {'claude':'#ff4fdc', 'codex':CYAN, 'grok':'#7cff8b'}[row['provider']] if style == 'deltarune' else color
+    label(draw, (120, 20), 'USED', color=ink, align='right')
+    for index, (window, period) in enumerate(choices):
+        y = 31 + index * 32
+        used = window['used_percent'] if window else None
+        draw.rectangle((43, y - 2, 121, y + 24), fill='#050008')
+        label(draw, (120, y), f'{used:.0f}%' if used is not None else '--', 2, align='right', width=75)
+        label(draw, (120, y + 18), 'RESET ' + duration(window, now), align='right', width=78)
+        bar_y = 96 + index * 16
+        draw.rectangle((6, bar_y - 1, 121, bar_y + 11), fill='#050008')
+        label(draw, (8, bar_y + 2), period[:3], color=ink, width=18)
+        used_bar(draw, (28, bar_y, 120, bar_y + 10), used, ink, old)
+    if old:
+        label(draw, (8, 85), 'OLD', color=GOLD)
+    elif row['status'] not in ('ok', 'stale'):
+        label(draw, (8, 85), STATUS.get(row['status'], 'NO DATA'), color=GOLD, width=111)
+    if style == 'gameboy':
+        from token_tv.gameboy import to_four_shades
+        canvas = to_four_shades(canvas)
+    return canvas
 
 
 def render_stock(snapshot,style):

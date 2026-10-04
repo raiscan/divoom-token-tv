@@ -28,9 +28,21 @@ def retro_backdrop(provider):
                         method=Image.Resampling.NEAREST, centering=(.6, .5)).convert('RGB')
 
 
-def panel_data(snapshot, now=None):
+def panel_data(snapshot, now=None, layout='windows'):
     """Each window owns its percentage and reset; overflow rotates every five minutes."""
     now = time.time() if now is None else now
+    if layout == 'accounts':
+        capacity = 3 if snapshot.get('weather') is not None else 4
+        entries = [{'kind': 'account', 'row': row} for row in snapshot['accounts'].values()]
+        if len(entries) > capacity:
+            offset = (int(now) // 300 * capacity) % len(entries)
+            entries = (entries + entries)[offset:offset + capacity]
+        if len(entries) < capacity:
+            entries.append({'kind': 'status'})
+        entries += [{'kind': 'empty'}] * (4 - len(entries))
+        return entries[:2] + [{'kind': 'clock'}] + entries[2:]
+    if layout != 'windows':
+        raise ValueError('Unknown Times Gate panel layout')
     entries = []
     for row in snapshot['accounts'].values():
         windows = row.get('windows', []) if row['status'] in ('ok', 'stale') else []
@@ -300,17 +312,25 @@ def instrument_panel(panel, snapshot, date, now, style, phase=0):
     return to_four_shades(image) if style == 'gameboy' else image
 
 
-def render_images(snapshot, style='digital', timezone='Europe/London', now=None, phase=0):
+def render_images(snapshot, style='digital', timezone='Europe/London', now=None, phase=0, layout='windows'):
     if style not in STYLES:
         raise ValueError('Unknown display style')
     now = time.time() if now is None else now
     date = datetime.fromtimestamp(now, ZoneInfo(timezone))
     if style in ('undertale', 'deltarune'):
         from token_tv.local_games import render_panel
-        return [render_panel(p, snapshot, style, now, phase, timezone) for p in panel_data(snapshot, now)]
-    return [(retro_panel(p, snapshot, date, now) if style == 'retro'
-             else instrument_panel(p, snapshot, date, now, style, phase))
-            for p in panel_data(snapshot, now)]
+        images = [render_panel(p, snapshot, style, now, phase % ANIMATION_FRAMES, timezone) for p in panel_data(snapshot, now, layout)]
+    else:
+        from token_tv.local_games import render_account
+        images = [(render_account(p['row'], now, phase if style == 'space' else 0, style) if p['kind'] == 'account'
+                   else retro_panel(p, snapshot, date, now) if style == 'retro'
+                   else instrument_panel(p, snapshot, date, now, style,
+                                         phase % ANIMATION_FRAMES if style == 'space' else 0))
+                  for p in panel_data(snapshot, now, layout)]
+    if snapshot.get('weather') is not None:
+        from token_tv.weather_face import render_panel
+        images[4] = render_panel(snapshot['weather'], now, phase)
+    return images
 
 
 def encode(image, animated=None):
@@ -323,23 +343,31 @@ def encode(image, animated=None):
     return output.getvalue()
 
 
-def render_panels(snapshot, style='digital', timezone='Europe/London', now=None):
+def render_panels(snapshot, style='digital', timezone='Europe/London', now=None, layout='windows'):
     now = time.time() if now is None else now
-    images = render_images(snapshot, style, timezone, now)
+    images = render_images(snapshot, style, timezone, now, layout=layout)
     if style not in ('space', 'undertale', 'deltarune'):
-        return [encode(image) for image in images]
-    phases = [images] + [render_images(snapshot, style, timezone, now, phase)
-                         for phase in range(1, ANIMATION_FRAMES)]
-    return [encode(images[i], [phase[i] for phase in phases[1:]]) for i in range(5)]
+        result = [encode(image) for image in images]
+    else:
+        phases = [images] + [render_images(snapshot, style, timezone, now, phase, layout)
+                             for phase in range(1, ANIMATION_FRAMES)]
+        result = [encode(images[i], [phase[i] for phase in phases[1:]]) for i in range(5)]
+    if snapshot.get('weather') is not None:
+        from token_tv.weather_face import render_animation
+        result[4] = render_animation(snapshot['weather'], now)
+    return result
 
 
-def render_preview(snapshot, style='digital', timezone='Europe/London', now=None, panels=(1, 2, 3, 4, 5)):
+def render_preview(snapshot, style='digital', timezone='Europe/London', now=None, panels=(1, 2, 3, 4, 5), layout='windows'):
     now = time.time() if now is None else now
     phases = ANIMATION_FRAMES if style in ('space', 'undertale', 'deltarune') else 1
+    if snapshot.get('weather') is not None:
+        from token_tv.weather_face import FRAMES
+        phases = FRAMES
     images = []
     for phase in range(phases):
         preview = Image.new('RGB', (640, 128))
-        for i, panel in enumerate(render_images(snapshot, style, timezone, now, phase)):
+        for i, panel in enumerate(render_images(snapshot, style, timezone, now, phase, layout)):
             if i + 1 not in panels:
                 panel = Image.new('RGB', (128, 128), '#101822')
                 draw = ImageDraw.Draw(panel)

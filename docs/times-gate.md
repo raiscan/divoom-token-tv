@@ -55,7 +55,7 @@ on failure. The computer must remain powered on and connected to the home networ
 
 ### Four TokenTV screens and Divoom weather
 
-This installation reserves screen 5 for the existing **Weather ONE** Divoom face (182),
+The previous mixed-screen setup reserved screen 5 for the existing **Weather ONE** Divoom face (182),
 in the device's saved **Control1** independent layout (189009). TokenTV uploads target
 screens 1–4 only, including every frame of animated appearances. The preview reserves
 the fifth position with a device-managed placeholder; it cannot read back Divoom's weather.
@@ -63,13 +63,19 @@ On startup, a changed picture ID, or after five minutes, the controller reselect
 weather face on screen 5 using `Channel/SetClockSelectId`. This refreshes only that screen.
 Face selection is acknowledged by the device; check its physical display to confirm rendering.
 
-The service uses these additional options:
+That built-in-weather configuration uses these additional options:
 
 ```sh
 --times-gate-panels 1,2,3,4 \
 --weather-clock 182 --lcd-independence 189009 \
 --local-token-file ~/.config/token-tv/times-gate-local-token.json
 ```
+
+The active setup now replaces that face with the matching local **Elnina and Lanino**
+Deltarune forecast for Poole, with Claude and Codex quota windows grouped per subscription.
+All five screens receive custom images. See [local game appearances](local-game-appearances.md)
+for the layout, data source, provenance and custom-weather options. The built-in face
+configuration above remains an available fallback.
 
 Newer firmware requires a **Local Token**, separate from a Divoom account password or
 device sharing QR code. In the phone app, open the Wi-Fi device list, then the Times Gate

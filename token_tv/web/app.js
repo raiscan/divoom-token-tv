@@ -241,10 +241,11 @@ function paintClock(forceImage = false) {
  $('#clock-panel').classList.toggle('times-gate-panel', timesGate);
  const device = timesGate ? 'times-gate' : 'photo';
  if ($('#gallery').dataset.device !== device) {$('#gallery').dataset.device = device; paintThemes()}
- $('#clock-dimensions').textContent = timesGate ? 'Five 128 × 128 screens · Each appearance renders at native resolution.' : '240 × 240 · The web appearance is separate from your clock style.';
+ $('#clock-dimensions').textContent = timesGate ? displayInfo?.panels?.length < 5 ? 'TokenTV screens ' + displayInfo.panels.join(', ') + ' · Other screens use Divoom faces; their live contents cannot be previewed here.' : 'Five 128 × 128 screens · Each appearance renders at native resolution.' : '240 × 240 · The web appearance is separate from your clock style.';
+ $('#local-token-form').hidden = DEMO || !displayInfo?.token_entry || (displayInfo.token_configured && displayInfo.status !== 'auth_required');
  $('#clock-style').disabled = applying || !displayInfo; $('#apply').disabled = DEMO || applying || !displayInfo || (style === displayInfo.style && displayInfo.status !== 'error' && !clockError);
  $('#apply').textContent = applying ? 'Sending image…' : 'Apply to clock'; $('#apply').dataset.state = applying ? 'loading' : clockError || displayInfo?.status === 'error' ? 'error' : displayInfo?.status === 'ok' ? 'success' : 'default';
- $('#display-state').textContent = DEMO ? 'Demo · install TokenTV to drive a real clock' : clockError ? 'Could not apply. Please retry.' : !displayInfo ? 'Clock status unavailable' : style !== displayInfo.style ? 'Preview only · Apply to send' : displayInfo.status === 'queued' ? 'Sending image…' : displayInfo.status === 'error' ? 'Clock upload failed. Please retry.' : displayInfo.status === 'preview_only' ? 'Preview only · No clock connected' : 'Image sent · ' + styleName(displayInfo.applied_style);
+ $('#display-state').textContent = DEMO ? 'Demo · install TokenTV to drive a real clock' : clockError ? 'Could not apply. Please retry.' : !displayInfo ? 'Clock status unavailable' : displayInfo.status === 'auth_required' ? 'Clock needs its Local Token. Enter it below to connect.' : style !== displayInfo.style ? 'Preview only · Apply to send' : displayInfo.status === 'queued' ? 'Sending image…' : displayInfo.status === 'error' ? 'Clock upload failed. Please retry.' : displayInfo.status === 'preview_only' ? 'Preview only · No clock connected' : 'Image sent · ' + styleName(displayInfo.applied_style);
  if (style && !$('#clock-panel').hidden && (forceImage || style !== lastImageStyle || Date.now() - lastImageAt > 30000)) {lastImageStyle = style; lastImageAt = Date.now(); $('#frame').src = DEMO ? displayInfo.frames?.[style] || `/frames/${encodeURIComponent(style)}.jpg` : '/frame/0.jpg?style=' + encodeURIComponent(style) + '&t=' + lastImageAt; $('#frame').alt = styleName(style) + ' live clock preview'}
 }
 const styleName = s => s === 'undertale' ? 'Undertale · Determination' : s === 'deltarune' ? 'Deltarune · Dark World' : s === 'gameboy' ? 'Game Boy' : s === 'retro' ? 'Pixel Retro' : s === 'hud' ? 'Sci-Fi HUD' : s ? s[0].toUpperCase() + s.slice(1) : 'Unknown';
@@ -252,6 +253,15 @@ let displayPolling = false;
 async function refreshDisplay(forceImage = false) {if (displayPolling) return; displayPolling = true; try {const r = await fetch(DEMO ? '/demo-display.json' : '/display', {cache:'no-store'}); if (!r.ok) throw Error(); const data = await r.json(); const dirty = displayInfo && clockChoice !== displayInfo.style; displayInfo = data; if (!clockChoice || !dirty) clockChoice = data.style; const select = $('#clock-style'); if (!select.options.length) for (const s of data.styles) {const o = el('option', styleName(s)); o.value = s; select.append(o)} select.value = clockChoice; paintClock(forceImage); if (DEMO && themeData && !lastThumbFrames) {lastThumbFrames = true; paintThemes()}} catch {$('#display-state').textContent = 'Clock status unavailable'} finally {displayPolling = false}}
 $('#clock-style').onchange = e => {clockChoice = e.target.value; clockError = false; paintClock(true); paintThemes()};
 $('#apply').onclick = async () => {if (applying || !clockChoice) return; applying = true; clockError = false; paintClock(); try {const r = await fetch('/display/style', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({style:clockChoice})}); if (!r.ok) throw Error(); displayInfo = await r.json()} catch {clockError = true} finally {applying = false; paintClock(true)}};
+$('#local-token-form').onsubmit = async e => {
+ e.preventDefault(); const field = $('#local-token'), button = $('#save-local-token'), state = $('#token-state');
+ const value = field.value; field.value = ''; button.disabled = true; state.textContent = 'Checking with your clock…';
+ try {
+  if (!/^[0-9]+$/.test(value)) throw Error();
+  const response = await fetch('/display/token', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({local_token:Number(value)})});
+  if (!response.ok) throw Error(); displayInfo = await response.json(); state.textContent = 'Connected · restoring your selected appearance.'; paintClock(true);
+ } catch {state.textContent = 'Could not connect. Check Local Token and that your clock is online.'} finally {button.disabled = false}
+};
 let themeData = null, themeSort = 'popular', lastThumbFrames = false;
 const REPO_URL = 'https://github.com/click6067-ship-it/token-tv';
 const day = s => new Date(s).toLocaleDateString();

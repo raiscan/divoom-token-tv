@@ -7,7 +7,8 @@ import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from unittest.mock import patch
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError
 
 from PIL import Image
 
@@ -186,6 +187,99 @@ class TimesGateTests(unittest.TestCase):
         for frame in frames:
             image = Image.open(io.BytesIO(frame))
             self.assertEqual((image.format, image.size), ('JPEG', (128, 128)))
+
+    def test_four_screens_reserve_fifth_across_animation_reboot_and_refresh(self):
+        device = times_gate.TimesGateDisplay(self.url, panels=(1, 2, 3, 4),
+                                            weather_clock=182, independence=189009)
+        frames = times_gate.render_panels(fixture(), 'space', now=1791079200)
+        for now, reset in ((100, None), (101, None), (102, 1), (403, None)):
+            self.calls.clear()
+            if reset is not None:
+                self.current_id = reset
+            receipts = device.publish(frames, now=now)
+            uploads = [d for _, d in self.calls if d['Command'] == 'Draw/SendHttpGif']
+            self.assertTrue(all(d['LcdArray'][4] == 0 and sum(d['LcdArray']) == 1 for d in uploads))
+            self.assertTrue(all(r['panel'] in (1, 2, 3, 4) for r in receipts))
+            weather = [d for _, d in self.calls if d['Command'] == 'Channel/SetClockSelectId']
+            self.assertEqual(len(weather), int(now != 101))
+            if weather:
+                self.assertEqual(weather[0], {'Command': 'Channel/SetClockSelectId', 'ClockId': 182,
+                                             'LcdIndex': 4, 'LcdIndependence': 189009})
+        with self.assertRaises(ValueError):
+            times_gate.TimesGateDisplay(self.url, weather_clock=182, independence=189009)
+
+    def test_local_token_is_validated_saved_privately_and_omitted_from_receipts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'token.json'
+            device = times_gate.TimesGateDisplay(self.url, panels=(1, 2, 3, 4), token_file=path)
+            device.save_token(123456)
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            reloaded = times_gate.TimesGateDisplay(self.url, token_file=path)
+            reloaded.capture()
+            self.assertEqual(self.calls[-1][1]['LocalToken'], 123456)
+            receipts = device.publish(times_gate.render_panels(fixture()))
+            self.assertNotIn('LocalToken', json.dumps(receipts))
+            self.error = 'DeviceToken is err'
+            with self.assertRaises(times_gate.LocalTokenRequired):
+                device.save_token(987654)
+            self.assertEqual(device.local_token, 123456)
+            self.assertEqual(json.loads(path.read_text()), {'local_token': 123456})
+            for bad in (True, '123456', -1, 2147483648, None):
+                with self.assertRaises(ValueError):
+                    device.save_token(bad)
+
+    def test_token_entry_endpoint_never_exposes_secret_and_rejects_cross_origin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            device = times_gate.TimesGateDisplay(self.url, panels=(1, 2, 3, 4),
+                                                token_file=Path(directory) / 'secret.json')
+            prefs = DisplayPreferences(Path(directory) / 'metadata.json',
+                                       {'device_type': 'times-gate', 'device_url': self.url}, device)
+            server = ThreadingHTTPServer(('127.0.0.1', 0), handler(UsageStore([]), prefs))
+            thread = threading.Thread(target=server.serve_forever)
+            thread.start()
+            root = f'http://127.0.0.1:{server.server_port}'
+            try:
+                headers = {'Content-Type': 'application/json', 'Origin': 'https://other.example'}
+                with self.assertRaises(HTTPError) as error:
+                    urlopen(Request(root + '/display/token', b'{"local_token":654321}', headers))
+                self.assertEqual(error.exception.code, 403)
+                error.exception.close()
+                self.assertFalse(device.token_file.exists())
+                headers.update(Origin='http://other.example', Host='other.example')
+                with self.assertRaises(HTTPError) as error:
+                    urlopen(Request(root + '/display/token', b'{"local_token":654321}', headers))
+                self.assertEqual(error.exception.code, 403)
+                error.exception.close()
+                headers.pop('Host')
+                headers['Origin'] = root
+                with urlopen(Request(root + '/display/token', b'{"local_token":654321}', headers)) as reply:
+                    result = reply.read().decode()
+                self.assertNotIn('654321', result)
+                self.assertTrue(json.loads(result)['token_configured'])
+                self.assertEqual(json.loads(result)['panels'], [1, 2, 3, 4])
+                self.assertTrue(prefs.changed.is_set())
+                for endpoint in ('/snapshot', '/display'):
+                    with urlopen(root + endpoint) as reply:
+                        self.assertNotIn('654321', reply.read().decode())
+            finally:
+                server.shutdown()
+                server.server_close()
+                thread.join()
+
+    def test_preview_keeps_weather_placeholder_consistent_across_styles(self):
+        fifth = []
+        for style in ('pixel', 'retro', 'gameboy', 'space'):
+            image = Image.open(io.BytesIO(times_gate.render_preview(fixture(), style,
+                               now=1791079200, panels=(1, 2, 3, 4))))
+            self.assertEqual(image.size, (640, 128))
+            fifth.append(image.convert('RGB').crop((512, 0, 640, 128)))
+        # Lossless GIF preview uses the exact same device placeholder image.
+        other = Image.open(io.BytesIO(times_gate.render_preview(fixture(), 'space',
+                           now=1791079201, panels=(1, 2, 3, 4))))
+        self.assertEqual(fifth[-1].tobytes(), other.convert('RGB').crop((512, 0, 640, 128)).tobytes())
+        for bad in ('', '1,1', '0,2', '1,6', 'all'):
+            with self.assertRaises(ValueError):
+                times_gate.screen_selection(bad)
 
 
 if __name__ == '__main__':

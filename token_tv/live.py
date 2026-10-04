@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from token_tv.device import FILES, PhotoDisplay
-from token_tv.times_gate import TimesGateDisplay, render_panels, render_preview
+from token_tv.times_gate import TimesGateDisplay, LocalTokenRequired, screen_selection, render_panels, render_preview
 from token_tv.catalog import payload as theme_payload
 from token_tv.display import STYLES, render_page
 from token_tv.web_assets import HTML, ASSETS, asset
@@ -28,9 +28,10 @@ def write_json(path, data):
 
 
 class DisplayPreferences:
-    def __init__(self, config_path, config):
+    def __init__(self, config_path, config, device=None):
         self.path = Path(config_path)
         self.config = dict(config)
+        self.device = device
         self.style = config.get('display_style', 'pixel')
         self.applied_style = None
         self.status = 'queued' if config.get('device_url') else 'preview_only'
@@ -39,9 +40,23 @@ class DisplayPreferences:
 
     def snapshot(self):
         with self.lock:
-            return {'style': self.style, 'applied_style': self.applied_style,
+            result = {'style': self.style, 'applied_style': self.applied_style,
                     'status': self.status, 'styles': list(STYLES),
                     'device_type': self.config.get('device_type', 'photo')}
+            if isinstance(self.device, TimesGateDisplay):
+                result.update(panels=list(self.device.panels),
+                              token_entry=bool(self.device.token_file),
+                              token_configured=self.device.local_token is not None,
+                              weather_clock=self.device.weather_clock)
+            return result
+
+    def set_token(self, value):
+        if not isinstance(self.device, TimesGateDisplay):
+            raise ValueError('A Times Gate is required')
+        self.device.save_token(value)
+        with self.lock:
+            self.status = 'queued'
+        self.changed.set()
 
     def set_style(self, style):
         if style not in STYLES:
@@ -54,11 +69,12 @@ class DisplayPreferences:
             self.status = 'queued' if self.config.get('device_url') else 'preview_only'
         self.changed.set()
 
-    def delivered(self, style, success):
+    def delivered(self, style, success, auth_required=False):
         with self.lock:
             if success:
                 self.applied_style = style
-            self.status = ('queued' if style != self.style else 'ok' if success else 'error')
+            self.status = ('queued' if style != self.style else 'ok' if success else
+                           'auth_required' if auth_required else 'error')
 
 
 def handler(store, preferences=None):
@@ -87,7 +103,8 @@ def handler(store, preferences=None):
                 if style not in STYLES:
                     self.send_error(400, 'Unknown display style')
                     return
-                body = (render_preview(snapshot, style, preferences.config.get('timezone', 'Europe/London'))
+                body = (render_preview(snapshot, style, preferences.config.get('timezone', 'Europe/London'),
+                                       panels=display.get('panels', (1, 2, 3, 4, 5)))
                         if preferences and display.get('device_type') == 'times-gate'
                         else render_page(snapshot, int(path[7]), style))
                 content_type = "image/gif" if body[:4] == b"GIF8" else "image/jpeg"
@@ -112,7 +129,8 @@ def handler(store, preferences=None):
             self.wfile.write(body)
 
         def do_POST(self):
-            if urlparse(self.path).path != '/display/style':
+            path = urlparse(self.path).path
+            if path not in ('/display/style', '/display/token'):
                 self.send_error(404)
                 return
             if preferences is None:
@@ -122,19 +140,33 @@ def handler(store, preferences=None):
             if origin and (urlparse(origin).scheme not in ('http', 'https') or urlparse(origin).netloc != self.headers.get('Host')):
                 self.send_error(403, 'Origin mismatch')
                 return
+            if path == '/display/token' and (self.client_address[0] not in ('127.0.0.1', '::1') or
+                    self.server.server_address[0] not in ('127.0.0.1', '::1') or
+                    urlparse('http://' + self.headers.get('Host', '')).hostname not in
+                    ('localhost', '127.0.0.1', '::1')):
+                self.send_error(403, 'Enter Local Token on this computer')
+                return
             try:
                 length = int(self.headers.get('Content-Length', '0'))
                 if not 0 < length <= 1024 or self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
                     raise ValueError('Invalid JSON request')
                 data = json.loads(self.rfile.read(length))
-                if not isinstance(data, dict) or set(data) != {'style'} or data['style'] not in STYLES:
-                    raise ValueError('Unknown display style')
-                preferences.set_style(data['style'])
+                if path == '/display/token':
+                    if not isinstance(data, dict) or set(data) != {'local_token'}:
+                        raise ValueError('Invalid token request')
+                    preferences.set_token(data['local_token'])
+                else:
+                    if not isinstance(data, dict) or set(data) != {'style'} or data['style'] not in STYLES:
+                        raise ValueError('Unknown display style')
+                    preferences.set_style(data['style'])
+            except LocalTokenRequired:
+                self.send_error(400, 'Local Token was rejected by the clock')
+                return
             except (ValueError, UnicodeError):
-                self.send_error(400, 'Choose a supported display style')
+                self.send_error(400, 'Invalid display setting')
                 return
             except OSError:
-                self.send_error(500, 'Could not save display choice')
+                self.send_error(500, 'Could not save display setting')
                 return
             self.reply(200, json.dumps(preferences.snapshot()).encode())
     return Handler
@@ -149,13 +181,26 @@ def main():
     parser.add_argument("--output", help="Write a normalized snapshot rather than stdout")
     parser.add_argument("--state-dir", default=".runtime")
     parser.add_argument("--restore-display", action="store_true")
+    parser.add_argument("--times-gate-panels", default='1,2,3,4,5', help='Physical screens controlled by TokenTV')
+    parser.add_argument("--local-token-file", help='Private file for the Times Gate Local Token; enables dashboard entry')
+    parser.add_argument("--weather-clock", type=int, help='Existing Divoom weather face ID for reserved screen 5')
+    parser.add_argument("--lcd-independence", type=int, help='Existing independent layout ID from Divoom')
     args = parser.parse_args()
     config = load_config(args.config)
     if config.get("font"):
         os.environ["TOKEN_TV_FONT"] = config["font"]
     state_dir = Path(args.state_dir)
-    device_class = TimesGateDisplay if config.get('device_type') == 'times-gate' else PhotoDisplay
-    device = device_class(config['device_url']) if config.get('device_url') else None
+    device = None
+    if config.get('device_url'):
+        if config.get('device_type') == 'times-gate':
+            try:
+                device = TimesGateDisplay(config['device_url'], screen_selection(args.times_gate_panels),
+                                          args.local_token_file, weather_clock=args.weather_clock,
+                                          independence=args.lcd_independence)
+            except ValueError:
+                parser.error('Invalid Times Gate screens, weather layout, or local token file')
+        else:
+            device = PhotoDisplay(config['device_url'])
     backup_path = state_dir / "display-original.json"
     if args.restore_display:
         if not device or not backup_path.is_file():
@@ -164,7 +209,7 @@ def main():
         print("Original display selection restored.")
         return
     store = UsageStore(config["accounts"])
-    preferences = DisplayPreferences(args.config, config)
+    preferences = DisplayPreferences(args.config, config, device)
     interval = max(60, int(config.get("poll_seconds", 300)))
     stopping = threading.Event()
     original = None
@@ -206,7 +251,7 @@ def main():
             except (OSError, ValueError, KeyError) as error:
                 write_json(state_dir / "display-receipt.json", {"at": int(time.time()), "style": style, "status": "error", "phase": phase,
                            "uploads": receipts, "http_status": getattr(error, "code", None)})
-                preferences.delivered(style, False)
+                preferences.delivered(style, False, isinstance(error, LocalTokenRequired))
         snapshot['display'] = preferences.snapshot()
         write_json(state_dir / "snapshot.json", snapshot)
         if args.output:

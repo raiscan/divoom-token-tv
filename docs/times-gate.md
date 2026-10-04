@@ -22,7 +22,7 @@ Providers sometimes report fewer windows (for example, only a weekly Codex quota
 panel shows update status. Missing data remains unknown, and cached readings say OLD.
 More than four usage windows rotate in groups every five minutes, without merging accounts.
 
-The dashboard at http://127.0.0.1:8787 shows the same five panels in **Clock display**.
+The dashboard at http://127.0.0.1:8787 shows the five-panel layout in **Clock display**.
 All seven appearances have native layouts: Pixel, Digital, Neon, Pixel Retro, Sci-Fi HUD,
 Space and Game Boy. Pixel Retro's landscapes are uniformly scaled and cropped around the
 sunset and moon, preserving their proportions. Digital uses the original LCD numerals, Neon
@@ -53,6 +53,43 @@ Only images and percentages go to the device. The dashboard listens on localhost
 A user service named `token-tv-times-gate.service` starts with your user session and restarts
 on failure. The computer must remain powered on and connected to the home network.
 
+### Four TokenTV screens and Divoom weather
+
+This installation reserves screen 5 for the existing **Weather ONE** Divoom face (182),
+in the device's saved **Control1** independent layout (189009). TokenTV uploads target
+screens 1–4 only, including every frame of animated appearances. The preview reserves
+the fifth position with a device-managed placeholder; it cannot read back Divoom's weather.
+On startup, a changed picture ID, or after five minutes, the controller reselects the saved
+weather face on screen 5 using `Channel/SetClockSelectId`. This refreshes only that screen.
+Face selection is acknowledged by the device; check its physical display to confirm rendering.
+
+The service uses these additional options:
+
+```sh
+--times-gate-panels 1,2,3,4 \
+--weather-clock 182 --lcd-independence 189009 \
+--local-token-file ~/.config/token-tv/times-gate-local-token.json
+```
+
+Newer firmware requires a **Local Token**, separate from a Divoom account password or
+device sharing QR code. In the phone app, open the Wi-Fi device list, then the Times Gate
+card's **Settings …**. The token appears under **Device Information**, beneath **IP Address**.
+If it is missing, update the Divoom app first: updating exposed it on this user's phone.
+Enter it in the local dashboard's **Clock display** panel when connection is required.
+The app validates it with a read-only device command and stores it in a separate file
+with owner-only permissions. Tokens never appear in dashboard responses, snapshots or receipts.
+The entry endpoint is available only when the dashboard listens on localhost.
+
+The physical **Mode** button cycles Divoom's saved display configurations, independently of
+TokenTV's appearance selector. The controller reasserts its selected appearance periodically
+while this computer is running; this is not a remapping of the Mode button. Existing saved
+configurations are preserved. To edit those configurations, use the Divoom app's independent
+screen editor and save the layout. Built-in weather needs the app's weather/location setup
+and periodic synchronisation; selecting the face does not configure a weather location.
+
+References: [Divoom local API](https://docin.divoom-gz.com/web/#/5/374),
+[pictured app settings guide](https://github.com/RetiredOnMyTerms/pixelgate#readme).
+
 ```sh
 systemctl --user status token-tv-times-gate
 systemctl --user restart token-tv-times-gate
@@ -64,7 +101,8 @@ To stop the display controller and restore the saved channel selections:
 ```sh
 systemctl --user disable --now token-tv-times-gate
 cd /home/farrell/code/projects/divoom-token-tv
-.venv/bin/token-tv run --config ~/.config/token-tv/times-gate.json --restore-display
+.venv/bin/token-tv run --config ~/.config/token-tv/times-gate.json --restore-display \
+  --local-token-file ~/.config/token-tv/times-gate-local-token.json
 ```
 
 The restore backup is bound to this device URL. It preserves the previous channel selection,

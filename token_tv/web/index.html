@@ -63,6 +63,13 @@
       <select id="clock-style" class="control"></select>
       <button class="control primary" id="apply" type="button" disabled>Apply to clock</button>
       <p id="display-state" role="status">Loading clock status</p>
+      <form id="local-token-form" hidden>
+        <label for="local-token">Divoom Local Token</label>
+        <input class="control" id="local-token" type="password" inputmode="numeric" autocomplete="off" required pattern="[0-9]+" placeholder="From device Settings on your phone">
+        <button class="control" type="submit" id="save-local-token">Connect clock</button>
+        <p class="quiet">Phone app → Wi-Fi device list → Times Gate Settings → Device Information → Local Token. Saved privately on this computer.</p>
+        <p id="token-state" role="status"></p>
+      </form>
       <p class="quiet" id="clock-dimensions">240 × 240 · The web appearance is separate from your clock style.</p>
     </aside>
   </div>

@@ -333,13 +333,20 @@ def render_panels(snapshot, style='digital', timezone='Europe/London', now=None)
     return [encode(images[i], [phase[i] for phase in phases[1:]]) for i in range(5)]
 
 
-def render_preview(snapshot, style='digital', timezone='Europe/London', now=None):
+def render_preview(snapshot, style='digital', timezone='Europe/London', now=None, panels=(1, 2, 3, 4, 5)):
     now = time.time() if now is None else now
     phases = ANIMATION_FRAMES if style in ('space', 'undertale', 'deltarune') else 1
     images = []
     for phase in range(phases):
         preview = Image.new('RGB', (640, 128))
         for i, panel in enumerate(render_images(snapshot, style, timezone, now, phase)):
+            if i + 1 not in panels:
+                panel = Image.new('RGB', (128, 128), '#101822')
+                draw = ImageDraw.Draw(panel)
+                draw.rectangle((3, 3, 124, 124), outline='#607485')
+                for y, text in ((33, 'DIVOOM'), (53, 'WEATHER' if i == 4 else 'DEVICE FACE'),
+                                (83, 'DEVICE MANAGED')):
+                    pixel_text(draw, ((128 - (len(text) * 6 - 1)) // 2, y), text, 1, '#b1c6d7')
             preview.paste(panel, (i * 128, 0))
         images.append(preview)
     return encode(images[0], images[1:] if phases > 1 else None)

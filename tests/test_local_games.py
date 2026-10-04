@@ -100,7 +100,7 @@ class LocalGameFacesTests(unittest.TestCase):
                              [None, None] if status == 'auth_required' else [used])
             self.assertTrue(all(call.args[4] == (status == 'stale') for call in meters.call_args_list))
             texts = [call.args[2] for call in labels.call_args_list]
-            if status == 'stale': self.assertIn('OLD', texts)
+            if status == 'stale': self.assertIn("I'M OLD!", texts)
             if used is None or status == 'auth_required': self.assertIn('--', texts)
             if used == 0: self.assertIn('0', texts)
         self.assertEqual(len(set(images)), 4)
@@ -126,6 +126,73 @@ class LocalGameFacesTests(unittest.TestCase):
             local_games.render_account(row, NOW)
         self.assertEqual(meters.call_count, 1)
         self.assertEqual(meters.call_args.args[2], 55)
+
+    def test_gerson_replaces_only_stale_deltarune_characters_and_keeps_the_quotas(self):
+        from token_tv import local_games
+        for i,name in enumerate(local_games.GERSON_FRAMES):
+            Image.new('RGBA',(20,30),(30+i*30,200,70)).save(self.root/'sprites'/(name+'.png'))
+        row=copy.deepcopy(self.data['accounts']['claude_a'])
+        with patch('token_tv.local_art.ART_ROOT',self.root):
+            for status in ('ok','stale','auth_required'):
+                row['status']=status
+                with patch.object(local_games,'put_gerson',wraps=local_games.put_gerson) as gerson, \
+                     patch.object(local_games,'label',wraps=local_games.label) as labels, \
+                     patch.object(local_games,'used_bar',wraps=local_games.used_bar) as meters:
+                    local_games.render_account(row,NOW)
+                self.assertEqual(gerson.call_count,int(status=='stale'))
+                self.assertEqual([call.args[2] for call in meters.call_args_list],
+                                 [None,None] if status=='auth_required' else [72,38])
+                texts=[call.args[2] for call in labels.call_args_list]
+                if status=='stale':
+                    self.assertIn("I'M OLD!",texts)
+                    self.assertNotIn('OLD',texts)
+            row['status']='stale'
+            images=[local_games.render_account(row,NOW,phase) for phase in (0,2,4,6)]
+            self.assertEqual(len({im.crop((7,27,69,92)).tobytes() for im in images}),4)
+            # Ignore the moving grid between readouts; the actual values stay fixed.
+            for box in ((73,29,122,56),(73,61,122,88),(6,95,122,124)):
+                self.assertEqual(len({im.crop(box).tobytes() for im in images}),1)
+            with patch.object(local_games,'put_gerson',wraps=local_games.put_gerson) as gerson:
+                local_games.render_account(row,NOW,style='undertale')
+            gerson.assert_not_called()
+            (self.root/'sprites'/f'{local_games.GERSON_FRAMES[0]}.png').unlink()
+            with patch.object(local_games,'label',wraps=local_games.label) as labels:
+                self.assertEqual(local_games.render_account(row,NOW).size,(128,128))
+            self.assertIn("I'M OLD!",[call.args[2] for call in labels.call_args_list])
+
+    def test_footer_labels_describe_sync_and_connection_and_party_staleness(self):
+        from token_tv import local_games
+        from token_tv.times_gate_faces import panel_data
+        for name in local_games.GERSON_FRAMES:
+            Image.new('RGBA',(20,30),'#55bb33').save(self.root/'sprites'/(name+'.png'))
+        with patch('token_tv.local_art.ART_ROOT',self.root):
+            for stale in (False,True):
+                data=copy.deepcopy(self.data)
+                if stale:data['accounts']['codex_a']['status']='stale'
+                with patch.object(local_games,'label',wraps=local_games.label) as labels, \
+                     patch.object(local_games,'put_gerson',wraps=local_games.put_gerson) as gerson:
+                    local_games.render_panel({'kind':'status'},data,'deltarune',NOW)
+                texts=[call.args[2] for call in labels.call_args_list]
+                self.assertIn('SYNC',texts)
+                self.assertNotIn('SAVE',texts)
+                self.assertEqual(gerson.call_count,int(stale))
+                if stale:self.assertIn("I'M OLD!",texts)
+            with patch.object(local_games,'label',wraps=local_games.label) as labels:
+                local_games.render_panel({'kind':'empty'},self.data,'deltarune',NOW)
+                local_games.render_panel(panel_data(self.data,NOW)[0],self.data,'deltarune',NOW)
+            texts=[call.args[2] for call in labels.call_args_list]
+            self.assertIn('LINK',texts)
+            self.assertNotIn('ACT',texts)
+
+    def test_quote_punctuation_has_its_own_pixel_glyphs(self):
+        from PIL import ImageDraw
+        from token_tv.local_games import label
+        images=[]
+        for value in ("'",'!','?'):
+            canvas=Image.new('RGB',(5,7))
+            label(ImageDraw.Draw(canvas),(0,0),value)
+            images.append(canvas.tobytes())
+        self.assertEqual(len(set(images)),3)
 
     def test_full_strips_use_native_animated_payloads_and_stock_faces_stay_240px(self):
         from token_tv import times_gate_faces

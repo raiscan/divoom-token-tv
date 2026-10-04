@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from PIL import Image, ImageDraw
-from token_tv.local_games import label, sprite, fit_sprite, PURPLE, CYAN, GOLD
+from token_tv.local_games import label, sprite, fit_sprite, put_gerson, STALE_QUOTE, PURPLE, CYAN, GOLD
 from token_tv.weather import condition
 
 FRAMES = 32
@@ -114,6 +114,25 @@ def render_panel(weather, now, phase=0):
     else:
         hosts = fit_sprite(sprite('weather-hosts-' + str((phase % 16) * 5 // 16)), (116, 49))
         canvas.paste(hosts, ((128 - hosts.width) // 2, 30 + (49 - hosts.height) // 2), hosts)
+    if weather.get('status') == 'stale':
+        # Replace both presenters, keeping the actual forecast card and readings.
+        scene = canvas.copy()
+        card = canvas.crop((39, 30, 89, 79)) if battle else None
+        draw.rectangle((5,29,122,78),fill='#050008')
+        if put_gerson(canvas,(9,30,55,48),phase):
+            draw.rectangle((5,5,122,17),fill='#050008')
+            label(draw,(64,8),"GERSON'S WEATHER",align='center',color=CYAN)
+            if card:
+                canvas.paste(card,(69,30))
+                draw.rectangle((70,31,117,41),fill='#150622')
+                label(draw,(94,33),STALE_QUOTE,align='center',color=GOLD,width=47)
+            else:
+                label(draw,(120,43),STALE_QUOTE,align='right',color=GOLD,width=53)
+        else:
+            # Incomplete optional art must still leave stale data identifiable.
+            canvas.paste(scene)
+            draw.rectangle((5,5,122,17),fill='#050008')
+            label(draw,(64,8),STALE_QUOTE,align='center',color=GOLD)
     if tomorrow:
         label(draw, (64, 80), 'HIGH / LOW', align='center', color=CYAN)
     elif battle:
@@ -123,11 +142,7 @@ def render_panel(weather, now, phase=0):
     rain = day.get('rain')
     label(draw, (64, 115 if tomorrow or battle else 113), 'RAIN ' + (str(round(rain)) + '%' if rain is not None else '--'),
           align='center', color=CYAN)
-    if weather.get('status') == 'stale':
-        draw.rectangle((60 if battle else 97, 19 if battle else 71,
-                        81 if battle else 121, 28 if battle else 81), fill='#000000')
-        label(draw, (80 if battle else 120, 20 if battle else 73), 'OLD', align='right', color=GOLD)
-    elif weather.get('status') in ('loading', 'error'):
+    if weather.get('status') in ('loading', 'error'):
         draw.rectangle((7, 71, 120, 81), fill='#000000')
         label(draw, (64, 73), 'NO FORECAST', align='center', color=GOLD)
     return canvas

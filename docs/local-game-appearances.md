@@ -10,7 +10,8 @@ Two optional local faces are installed on this computer:
 Both keep the five-screen layout and render at 128×128 per panel. Every percentage
 and bar means **quota used**, not HP remaining or game TP. Each quota window keeps
 its own reset countdown. Missing readings show `--` / `UNKNOWN`; cached readings
-are marked `OLD` and have a hatched bar. The original faces loop in four seconds.
+have a hatched bar and are marked `OLD` in Undertale or `I'M OLD!` in Deltarune.
+The original faces loop in four seconds.
 The 240×240 photo-display versions remain static. Deltarune uses horizontal quota
 bars only; its former duplicate vertical meter has been removed.
 
@@ -24,7 +25,7 @@ character, without reserving an empty row for the other limit. The period remain
 beside the bar and the looping-clock icon marks its reset countdown. This adaptive
 layout also applies to the other Times Gate appearances. A reported limit with a
 missing reading still shows `--`; a real zero remains zero. Failed accounts keep
-their visible status and unknown meters, while cached readings remain marked `OLD`.
+their visible status and unknown meters, while cached readings retain their stale marker.
 Reset timers use a small looping-clock icon. Larger original battle sprites perform
 three four-second clips in a twelve-second loop, choosing a shuffled action order
 for each account each minute. The same account/minute selects the same sequence
@@ -35,6 +36,15 @@ original proportions, keeping the character readable without covering the quota.
 Screen 3 is the Dark Fountain clock, screen 4 is Ralsei's party status, and screen 5
 is Elnina and Lanino's live weather broadcast. Additional accounts rotate as whole
 subscriptions, with three available account positions when weather occupies screen 5.
+
+Deltarune's stale quota panels replace the party member with original Darkner Gerson
+speaking/laughing poses and his **I'M OLD!** quote. Party status also uses Gerson when
+any account is stale; a stale forecast replaces both weather presenters with him.
+Cached numbers and reset times remain visible, and quota meters remain hatched.
+Fresh data restores the usual characters. Missing optional Gerson art leaves the
+usual character and quote visible. His four-pose loop reuses existing native frames.
+Footer badges now say **SYNC** beside the last-check time and **LINK** beside the
+connection prompt; single-window quota footers use the looping-clock icon.
 
 ## Elnina and Lanino weather
 
@@ -49,7 +59,7 @@ assets are absent.
 It alternates every four seconds between current conditions and tomorrow's high/low
 temperatures and daily maximum precipitation probability for **Poole, Dorset, UK**.
 Temperatures are Celsius. Missing readings are `--`; a cached forecast after a failed
-refresh or an aged reading is marked **OLD**. Forecast days are selected by their
+refresh or an aged reading is marked **I'M OLD!**. Forecast days are selected by their
 local dates, so yesterday's cached data cannot become tomorrow's forecast.
 
 Weather comes from [Open-Meteo](https://open-meteo.com/en/docs) and refreshes with the
@@ -106,6 +116,10 @@ sprite sheets at The Spriters Resource, separate from its **Custom / Edited** ca
   Chapters 1–2 battle animations. Original sheets, their URLs/checksums, extracted
   frames, action sequences and exact cell crops remain in the local artwork directory,
   in `sources.json`, `party-actions.json` and `party-actions-extraction.json`.
+- [Old Man Gerson](https://www.spriters-resource.com/pc_computer/deltarune/asset/273902/page-2/):
+  original Darkner speaking/laughing poses from the PC / Computer game sheet.
+  `gerson-extraction.json` records the original URL, checksum, four source cells
+  and exact background colours removed. The source and derived art remain local.
 
 Game artwork remains © Toby Fox and the games' artists. It is outside Git and
 is not included in the repository's software license or redistributed.

@@ -16,6 +16,8 @@ from token_tv.display import STATUS, overview_rows, pixel_text
 WHITE, RED, GOLD = '#ffffff', '#ff2222', '#ffff00'
 ORANGE, PURPLE, CYAN = '#ff8c00', '#8e4fdc', '#33e6ff'
 FRAMES = 16
+STALE_QUOTE = "I'M OLD!"
+GERSON_FRAMES = tuple(f'gerson-talk-{i}' for i in range(4))
 
 
 @functools.lru_cache(maxsize=64)
@@ -42,6 +44,19 @@ def put_sprite(canvas, name, box, phase=0, bob=False):
     canvas.paste(image, (x + (width-image.width)//2, y + height-image.height+dy), image)
 
 
+def put_gerson(canvas, box, phase=0):
+    """Optional original speaking poses, with no downloads or extra native frames."""
+    if not all((local_art.ART_ROOT / 'sprites' / (name + '.png')).is_file() for name in GERSON_FRAMES):
+        return False
+    image = sprite(GERSON_FRAMES[(phase // 2) % len(GERSON_FRAMES)])
+    x, y, width, height = box
+    scale = min(width / image.width, height / image.height)
+    image = image.resize((max(1, round(image.width * scale)), max(1, round(image.height * scale))),
+                         Image.Resampling.NEAREST)
+    canvas.paste(image, (x + (width-image.width)//2, y + height-image.height), image)
+    return True
+
+
 def label(draw, xy, value, scale=1, color=WHITE, align='left', width=114):
     value = str(value).upper()
     limit = max(1, (width // scale + 1) // 6)
@@ -52,6 +67,8 @@ def label(draw, xy, value, scale=1, color=WHITE, align='left', width=114):
     if align == 'center':x -= text_width//2
     elif align == 'right':x -= text_width
     marks = {':': '00000/00100/00100/00000/00100/00100/00000',
+             "'": '00100/00100/01000/00000/00000/00000/00000',
+             '!': '00100/00100/00100/00100/00100/00000/00100',
              '+': '00000/00100/00100/11111/00100/00100/00000',
              '/': '00001/00001/00010/00100/01000/10000/10000',
              '*': '00000/10101/01110/11111/01110/10101/00000'}
@@ -117,6 +134,13 @@ def footer(draw, action, right, deltarune=False):
     label(draw,(120,113),right,color=WHITE,align='right',width=108-width)
 
 
+def reset_footer(draw, right, deltarune=False):
+    color = PURPLE if deltarune else ORANGE
+    draw.rectangle((6,109,26,123),outline=color)
+    reset_icon(draw,12,112,color)
+    label(draw,(120,113),right,align='right',width=87)
+
+
 def _undertale(panel, snapshot, date, now, phase):
     canvas = Image.new('RGB',(128,128),'#000000');draw=ImageDraw.Draw(canvas)
     draw.rectangle((2,2,125,125),outline=WHITE,width=2)
@@ -137,7 +161,7 @@ def _undertale(panel, snapshot, date, now, phase):
         heart(draw,14+phase%8,76+phase//8)
         used_bar(draw,(7,90,120,96),used,GOLD,old)
         label(draw,(8,100),'RESET IN')
-        footer(draw,'ACT',duration(window,now))
+        reset_footer(draw,duration(window,now))
     elif kind == 'clock':
         label(draw,(64,9),'SAVE POINT',align='center')
         star(draw,64,33,phase)
@@ -155,13 +179,13 @@ def _undertale(panel, snapshot, date, now, phase):
         label(draw,(64,65),f"{sum(r['status']=='ok' for r in rows)}/{len(rows)}",scale=3,align='center')
         label(draw,(64,93),'ACCOUNTS LIVE',align='center')
         updated = snapshot.get('updated_at')
-        footer(draw,'SAVE',datetime.fromtimestamp(updated,date.tzinfo).strftime('%H:%M') if updated else '--')
+        footer(draw,'SYNC',datetime.fromtimestamp(updated,date.tzinfo).strftime('%H:%M') if updated else '--')
     else:
         label(draw,(64,9),'UNDERTALE',align='center')
         put_sprite(canvas,'blook',(41,30,46,46),phase,True)
         star(draw,20,43,phase)
         label(draw,(64,88),'NO ACCOUNT',align='center')
-        footer(draw,'ACT','CONNECT')
+        footer(draw,'LINK','CONNECT')
     return canvas
 
 
@@ -190,17 +214,19 @@ def _deltarune(panel,snapshot,date,now,phase):
         label(draw,(20,8),row['alias'],width=100)
         label(draw,(8,20),window['label'] if window else STATUS.get(row['status'],'NO DATA'))
         old=row['status']=='stale'
-        if old:label(draw,(120,20),'OLD',color=GOLD,align='right')
+        if old:label(draw,(120,20),STALE_QUOTE,color=GOLD,align='right')
         name={'claude':'susie','codex':'kris','grok':'ralsei'}[row['provider']]
         color={'claude':'#ff4fdc','codex':CYAN,'grok':'#7cff8b'}[row['provider']]
-        put_sprite(canvas,name,(15,31,35,51),phase,True)
-        label(draw,(32,86),name,align='center',color=color,width=55)
+        gerson = old and put_gerson(canvas,(11,31,43,51),phase)
+        if not gerson:
+            put_sprite(canvas,name,(15,31,35,51),phase,True)
+        label(draw,(32,86),'GERSON' if gerson else name,align='center',color=color,width=55)
         used=window['used_percent'] if window else None
         label(draw,(120,47),f'{used:.0f}%' if used is not None else '--',scale=3,align='right',width=71)
         label(draw,(120,76),'USED' if used is not None else 'UNKNOWN',align='right',width=67)
         label(draw,(120,88),'RESET IN',align='right',width=62)
         used_bar(draw,(7,97,120,103),used,color,old)
-        footer(draw,'ACT',duration(window,now),True)
+        reset_footer(draw,duration(window,now),True)
     elif kind=='clock':
         image=ImageOps.fit(sprite('fountain-'+str(phase*5//FRAMES)),(118,118),method=Image.Resampling.NEAREST,centering=(.5,.6))
         canvas.paste(image,(5,5));draw=ImageDraw.Draw(canvas)
@@ -213,20 +239,25 @@ def _deltarune(panel,snapshot,date,now,phase):
         label(draw,(112,110),date.tzname() or 'LOCAL',align='right',color=CYAN)
     elif kind=='status':
         label(draw,(64,9),'PARTY STATUS',align='center')
-        from token_tv.party_actions import put_character
-        if not put_character(canvas,'ralsei','party',now,phase,(33,23,62,51)):
-            put_sprite(canvas,'ralsei',(45,25,38,50),phase,True)
         rows=list(snapshot['accounts'].values())
+        old=any(row['status']=='stale' for row in rows)
+        if old:
+            label(draw,(64,20),STALE_QUOTE,align='center',color=GOLD)
+        portrait=(33,30,62,44) if old else (33,23,62,51)
+        from token_tv.party_actions import put_character
+        if not (old and put_gerson(canvas,portrait,phase)):
+            if not put_character(canvas,'ralsei','party',now,phase,portrait):
+                put_sprite(canvas,'ralsei',portrait,phase,True)
         draw.rectangle((7,77,120,104),fill='#000000',outline=WHITE)
         label(draw,(64,80),f"{sum(r['status']=='ok' for r in rows)}/{len(rows)}",scale=2,align='center')
         label(draw,(64,96),'ACCOUNTS LIVE',align='center',color='#7cff8b')
         updated=snapshot.get('updated_at')
-        footer(draw,'SAVE',datetime.fromtimestamp(updated,date.tzinfo).strftime('%H:%M') if updated else '--',True)
+        footer(draw,'SYNC',datetime.fromtimestamp(updated,date.tzinfo).strftime('%H:%M') if updated else '--',True)
     else:
         label(draw,(64,9),'DELTARUNE',align='center')
         put_sprite(canvas,'ralsei',(43,28,42,55),phase,True)
         label(draw,(64,93),'NO ACCOUNT',align='center')
-        footer(draw,'ACT','CONNECT',True)
+        footer(draw,'LINK','CONNECT',True)
     return canvas
 
 
@@ -271,16 +302,17 @@ def render_account(row, now, phase=0, style='deltarune'):
     if single:
         choices = reported
     portrait_height = 78 if single else 65
-    if style in ('undertale', 'deltarune'):
+    old = row['status'] == 'stale'
+    gerson = style == 'deltarune' and old and put_gerson(canvas,(7,27,61,portrait_height),phase)
+    if not gerson and style in ('undertale', 'deltarune'):
         name = ({'claude':'susie', 'codex':'kris', 'grok':'ralsei'} if style == 'deltarune'
                 else {'claude':'papyrus', 'codex':'sans', 'grok':'toriel'})[row['provider']]
         from token_tv.party_actions import put_character
         if style != 'deltarune' or not put_character(canvas,name,row.get('key',row['alias']),now,phase,(7,27,61,portrait_height)):
             put_sprite(canvas, name, (8, 26, 55, portrait_height), phase % FRAMES, True)
-    else:
+    elif not gerson:
         art = bot_sprite(row['provider'], 39 if single else 30, 60 if single else 46)
         canvas.paste(art, (9, 30), art)
-    old = row['status'] == 'stale'
     ink = {'claude':'#ff4fdc', 'codex':CYAN, 'grok':'#7cff8b'}[row['provider']] if style == 'deltarune' else color
     label(draw, (120, 30 if single else 20), 'USED %' if single else 'USED', color=ink, align='right')
     for index, (window, period) in enumerate(choices):
@@ -300,7 +332,7 @@ def render_account(row, now, phase=0, style='deltarune'):
         label(draw, (8, bar_y + (4 if single else 2)), period[:3], color=ink, width=18)
         used_bar(draw, (28, bar_y, 120, bar_y + bar_height), used, ink, old)
     if old:
-        label(draw, (8, 20), 'OLD', color=GOLD)
+        label(draw, (8, 20), STALE_QUOTE if style == 'deltarune' else 'OLD', color=GOLD)
     elif row['status'] not in ('ok', 'stale'):
         label(draw, (8, 20), STATUS.get(row['status'], 'NO DATA'), color=GOLD, width=75)
     if style == 'gameboy':
@@ -319,10 +351,13 @@ def render_stock(snapshot,style):
         label(draw,(10,y),row['alias'],width=210)
         name=({'claude':'papyrus','codex':'sans','grok':'toriel'} if style=='undertale'
               else {'claude':'susie','codex':'kris','grok':'ralsei'})[row['provider']]
-        put_sprite(canvas,name,(12,y+13,38,43))
+        old = row['status']=='stale'
+        if not (style=='deltarune' and old and put_gerson(canvas,(12,y+13,38,43))):
+            put_sprite(canvas,name,(12,y+13,38,43))
         window=max(row['windows'],key=lambda w:w['used_percent'],default=None) if row['status'] in ('ok','stale') else None
         used=window['used_percent'] if window else None
         label(draw,(220,y+24),f'{used:.0f}%' if used is not None else '--',3,align='right',width=157)
-        label(draw,(56,y+53),('OLD ' if row['status']=='stale' else '')+(window['label'] if window else STATUS.get(row['status'],'NO DATA')),color=GOLD)
+        old_text = (STALE_QUOTE if style=='deltarune' else 'OLD')+' ' if old else ''
+        label(draw,(56,y+53),old_text+(window['label'] if window else STATUS.get(row['status'],'NO DATA')),color=GOLD)
         used_bar(draw,(10,y+65,229,y+70),used,GOLD if style=='undertale' else PURPLE,row['status']=='stale')
     return canvas

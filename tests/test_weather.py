@@ -236,8 +236,31 @@ class WeatherTests(unittest.TestCase):
                 self.assertEqual(len(readings),1)
             self.assertGreater(len({frame.crop((5,29,123,79)).tobytes() for frame in frames}),1)
             old = render_panel(dict(weather,status='stale'),NOW)
-            self.assertNotEqual(old.crop((60,19,82,29)).tobytes(),frames[0].crop((60,19,82,29)).tobytes())
+            self.assertNotEqual(old.crop((5,5,123,18)).tobytes(),frames[0].crop((5,5,123,18)).tobytes())
             (self.root/'sprites'/('weather-symbol-snow.png')).unlink()
             self.assertFalse(battle_available())
             fallback = render_panel(weather,NOW)
             self.assertNotEqual(fallback.tobytes(),frames[0].tobytes())
+
+    def test_stale_weather_replaces_both_hosts_but_preserves_the_cached_forecast(self):
+        from token_tv import weather_face,local_games
+        self.store.refresh(NOW)
+        weather=self.store.snapshot(NOW)
+        for name in weather_face.BATTLE_SPRITES:
+            Image.new('RGBA',(25,30),'#bb77dd').save(self.root/'sprites'/(name+'.png'))
+        for i,name in enumerate(local_games.GERSON_FRAMES):
+            Image.new('RGBA',(20,30),(50+i*40,170,50)).save(self.root/'sprites'/(name+'.png'))
+        with patch('token_tv.local_art.ART_ROOT',self.root):
+            for phase in (0,16):
+                current=render_panel(weather,NOW,phase)
+                with patch.object(weather_face,'label',wraps=weather_face.label) as labels:
+                    old=render_panel(dict(weather,status='stale'),NOW,phase)
+                self.assertIn("I'M OLD!",[call.args[2] for call in labels.call_args_list])
+                self.assertEqual(current.crop((5,80,123,124)).tobytes(),old.crop((5,80,123,124)).tobytes())
+                self.assertNotEqual(current.crop((5,29,123,79)).tobytes(),old.crop((5,29,123,79)).tobytes())
+            frames=[render_panel(dict(weather,status='stale'),NOW,phase) for phase in (0,2,4,6)]
+            self.assertEqual(len({frame.crop((9,30,64,78)).tobytes() for frame in frames}),4)
+            # A request failure without cached data keeps NO FORECAST and unknowns.
+            with patch.object(weather_face,'put_gerson',wraps=weather_face.put_gerson) as gerson:
+                render_panel(dict(weather,status='error',temperature=None,days=[]),NOW)
+            gerson.assert_not_called()

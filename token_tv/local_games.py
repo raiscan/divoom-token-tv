@@ -80,6 +80,13 @@ def star(draw, x, y, phase, color=GOLD):
     draw.point((x+round(8*math.cos(angle)),y+round(8*math.sin(angle))),fill=color)
 
 
+def reset_icon(draw, x, y, color=WHITE):
+    """A nine-pixel clock with a return arrow, readable beside a reset timer."""
+    draw.line([(x+6,y),(x+2,y),(x,y+2),(x,y+6),(x+2,y+8),(x+6,y+8),(x+8,y+6)],fill=color)
+    draw.line([(x+4,y+2),(x+4,y+4),(x+6,y+4)],fill=color)
+    draw.line([(x+6,y),(x+8,y),(x+8,y+2)],fill=color)
+
+
 def duration(window, now):
     if not window or not window.get('resets_at'):
         return '--'
@@ -171,9 +178,10 @@ def clock(draw,date,xy,scale):
 def _deltarune(panel,snapshot,date,now,phase):
     canvas=Image.new('RGB',(128,128),'#050008');draw=ImageDraw.Draw(canvas)
     for pos in range(-16,145,16):
-        draw.line((pos+phase,26,pos+phase,104),fill='#240024')
-        if 26 <= pos+phase <= 104:
-            draw.line((4,pos+phase,123,pos+phase),fill='#240024')
+        offset = phase % FRAMES
+        draw.line((pos+offset,26,pos+offset,104),fill='#240024')
+        if 26 <= pos+offset <= 104:
+            draw.line((4,pos+offset,123,pos+offset),fill='#240024')
     draw.rectangle((2,2,125,125),outline=PURPLE,width=2)
     kind=panel['kind']
     if kind=='usage':
@@ -205,7 +213,9 @@ def _deltarune(panel,snapshot,date,now,phase):
         label(draw,(112,110),date.tzname() or 'LOCAL',align='right',color=CYAN)
     elif kind=='status':
         label(draw,(64,9),'PARTY STATUS',align='center')
-        put_sprite(canvas,'ralsei',(45,25,38,50),phase,True)
+        from token_tv.party_actions import put_character
+        if not put_character(canvas,'ralsei','party',now,phase,(33,23,62,51)):
+            put_sprite(canvas,'ralsei',(45,25,38,50),phase,True)
         rows=list(snapshot['accounts'].values())
         draw.rectangle((7,77,120,104),fill='#000000',outline=WHITE)
         label(draw,(64,80),f"{sum(r['status']=='ok' for r in rows)}/{len(rows)}",scale=2,align='center')
@@ -223,6 +233,8 @@ def _deltarune(panel,snapshot,date,now,phase):
 def render_panel(panel,snapshot,style,now,phase=0,timezone='Europe/London'):
     if panel['kind'] == 'account':
         return render_account(panel['row'], now, phase, style)
+    if panel['kind'] != 'status':
+        phase %= FRAMES
     date=datetime.fromtimestamp(now,ZoneInfo(timezone))
     return (_undertale if style=='undertale' else _deltarune)(panel,snapshot,date,now,phase)
 
@@ -236,9 +248,9 @@ def render_account(row, now, phase=0, style='deltarune'):
              else ACCENT.get(style, ACCENT['retro'])[row['provider']][0])
     if style == 'deltarune':
         for pos in range(-16, 145, 16):
-            draw.line((pos + phase, 24, pos + phase, 104), fill='#240024')
-            if 24 <= pos + phase <= 104:
-                draw.line((4, pos + phase, 123, pos + phase), fill='#240024')
+            draw.line((pos + phase % FRAMES, 24, pos + phase % FRAMES, 104), fill='#240024')
+            if 24 <= pos + phase % FRAMES <= 104:
+                draw.line((4, pos + phase % FRAMES, 123, pos + phase % FRAMES), fill='#240024')
     elif style == 'retro':
         from token_tv.times_gate_faces import retro_backdrop
         canvas.paste(retro_backdrop(row['provider']), (5, 26))
@@ -249,7 +261,9 @@ def render_account(row, now, phase=0, style='deltarune'):
     if style in ('undertale', 'deltarune'):
         name = ({'claude':'susie', 'codex':'kris', 'grok':'ralsei'} if style == 'deltarune'
                 else {'claude':'papyrus', 'codex':'sans', 'grok':'toriel'})[row['provider']]
-        put_sprite(canvas, name, (8, 26, 32, 53), phase, True)
+        from token_tv.party_actions import put_character
+        if style != 'deltarune' or not put_character(canvas,name,row.get('key',row['alias']),now,phase,(7,27,61,65)):
+            put_sprite(canvas, name, (8, 26, 55, 65), phase % FRAMES, True)
     else:
         art = bot_sprite(row['provider'], 30, 46)
         canvas.paste(art, (9, 30), art)
@@ -265,17 +279,20 @@ def render_account(row, now, phase=0, style='deltarune'):
     for index, (window, period) in enumerate(choices):
         y = 31 + index * 32
         used = window['used_percent'] if window else None
-        draw.rectangle((43, y - 2, 121, y + 24), fill='#050008')
+        draw.rectangle((73, y - 2, 121, y + 24), fill='#050008')
         label(draw, (120, y), f'{used:.0f}%' if used is not None else '--', 2, align='right', width=75)
-        label(draw, (120, y + 18), 'RESET ' + duration(window, now), align='right', width=78)
+        text = duration(window, now)
+        text_width = min(len(text), 7) * 6 - 1
+        reset_icon(draw, 120 - text_width - 12, y + 17)
+        label(draw, (120, y + 18), text, align='right', width=42)
         bar_y = 96 + index * 16
         draw.rectangle((6, bar_y - 1, 121, bar_y + 11), fill='#050008')
         label(draw, (8, bar_y + 2), period[:3], color=ink, width=18)
         used_bar(draw, (28, bar_y, 120, bar_y + 10), used, ink, old)
     if old:
-        label(draw, (8, 85), 'OLD', color=GOLD)
+        label(draw, (8, 20), 'OLD', color=GOLD)
     elif row['status'] not in ('ok', 'stale'):
-        label(draw, (8, 85), STATUS.get(row['status'], 'NO DATA'), color=GOLD, width=111)
+        label(draw, (8, 20), STATUS.get(row['status'], 'NO DATA'), color=GOLD, width=75)
     if style == 'gameboy':
         from token_tv.gameboy import to_four_shades
         canvas = to_four_shades(canvas)

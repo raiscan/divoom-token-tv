@@ -319,7 +319,7 @@ def render_images(snapshot, style='digital', timezone='Europe/London', now=None,
     date = datetime.fromtimestamp(now, ZoneInfo(timezone))
     if style in ('undertale', 'deltarune'):
         from token_tv.local_games import render_panel
-        images = [render_panel(p, snapshot, style, now, phase % ANIMATION_FRAMES, timezone) for p in panel_data(snapshot, now, layout)]
+        images = [render_panel(p, snapshot, style, now, phase, timezone) for p in panel_data(snapshot, now, layout)]
     else:
         from token_tv.local_games import render_account
         images = [(render_account(p['row'], now, phase if style == 'space' else 0, style) if p['kind'] == 'account'
@@ -349,8 +349,13 @@ def render_panels(snapshot, style='digital', timezone='Europe/London', now=None,
     if style not in ('space', 'undertale', 'deltarune'):
         result = [encode(image) for image in images]
     else:
+        count = ANIMATION_FRAMES
+        if style == 'deltarune' and layout == 'accounts':
+            from token_tv.party_actions import available, FRAMES
+            if available():
+                count = FRAMES
         phases = [images] + [render_images(snapshot, style, timezone, now, phase, layout)
-                             for phase in range(1, ANIMATION_FRAMES)]
+                             for phase in range(1, count)]
         result = [encode(images[i], [phase[i] for phase in phases[1:]]) for i in range(5)]
     if snapshot.get('weather') is not None:
         from token_tv.weather_face import render_animation
@@ -361,9 +366,14 @@ def render_panels(snapshot, style='digital', timezone='Europe/London', now=None,
 def render_preview(snapshot, style='digital', timezone='Europe/London', now=None, panels=(1, 2, 3, 4, 5), layout='windows'):
     now = time.time() if now is None else now
     phases = ANIMATION_FRAMES if style in ('space', 'undertale', 'deltarune') else 1
+    if style == 'deltarune' and layout == 'accounts':
+        from token_tv.party_actions import available, FRAMES
+        if available():
+            phases = FRAMES
     if snapshot.get('weather') is not None:
+        from math import lcm
         from token_tv.weather_face import FRAMES
-        phases = FRAMES
+        phases = lcm(phases, FRAMES)
     images = []
     for phase in range(phases):
         preview = Image.new('RGB', (640, 128))

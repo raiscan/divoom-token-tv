@@ -25,6 +25,12 @@ def payload():
 
 class WeatherTests(unittest.TestCase):
     def setUp(self):
+        from token_tv import times_gate_faces
+        # Tests supply synthetic art; no personal game assets are required.
+        styles = tuple(dict.fromkeys((*times_gate_faces.STYLES, 'deltarune')))
+        self.styles = patch.object(times_gate_faces, 'STYLES', styles)
+        self.styles.start()
+        self.addCleanup(self.styles.stop)
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
@@ -173,3 +179,63 @@ class WeatherTests(unittest.TestCase):
             for style in ('pixel', 'digital', 'neon', 'retro', 'hud', 'space', 'gameboy', 'deltarune'):
                 for body in render_panels(data, style, now=NOW, layout='accounts'):
                     self.assertEqual(Image.open(io.BytesIO(body)).size, (128, 128))
+
+    def test_original_action_clips_change_over_time_and_preview_matches_native_loops(self):
+        import json
+        from token_tv.party_actions import available as actions_available, sequence
+        from token_tv.times_gate_faces import render_panels, render_preview
+        manifest = {}
+        for name in ('kris','susie','ralsei'):
+            manifest[name] = {}
+            for action in ('idle','act','defend'):
+                names = []
+                for frame in range(3):
+                    filename = f'{name}-{action}-{frame}'
+                    Image.new('RGBA', (20, 30), (50 + frame * 50, 50 + len(action) * 20, 150)).save(self.root / 'sprites' / (filename + '.png'))
+                    names.append(filename)
+                manifest[name][action] = names
+        (self.root / 'party-actions.json').write_text(json.dumps(manifest))
+        self.store.refresh(NOW)
+        data = snapshot(NOW,[('c','CLAUDE A','claude',[('5H',12,3600),('WEEK',38,86400)])])
+        data['weather'] = self.store.snapshot(NOW)
+        with patch('token_tv.local_art.ART_ROOT', self.root):
+            self.assertTrue(actions_available())
+            chosen = sequence('susie','c',NOW)
+            self.assertEqual(chosen, sequence('susie','c',NOW))
+            self.assertEqual(set(chosen), {'idle','act','defend'})
+            self.assertGreater(len({tuple(sequence('susie','c',NOW+i*60)) for i in range(12)}), 1)
+            panels = render_panels(data,'deltarune',now=NOW,layout='accounts')
+            native = Image.open(io.BytesIO(panels[0]))
+            weather = Image.open(io.BytesIO(panels[4]))
+            preview = Image.open(io.BytesIO(render_preview(data,'deltarune',now=NOW,layout='accounts')))
+            self.assertEqual((native.n_frames, weather.n_frames, preview.n_frames),(48,32,96))
+            for phase in (0, 5, 16, 32, 47, 48, 64, 95):
+                native.seek(phase % 48); weather.seek(phase % 32);preview.seek(phase)
+                self.assertEqual(preview.convert('RGB').crop((0,0,128,128)).tobytes(), native.convert('RGB').tobytes())
+                self.assertEqual(preview.convert('RGB').crop((512,0,640,128)).tobytes(), weather.convert('RGB').tobytes())
+                self.assertEqual(preview.info['duration'], 250)
+
+    def test_battle_weather_symbols_follow_forecast_without_animating_over_readings(self):
+        from token_tv.weather_face import BATTLE_SPRITES, battle_available, weather_symbol
+        for code, is_day, expected in ((0,True,'sun'), (0,False,'moon'), (0,None,'cloud'),
+                (2,True,'partly'), (3,True,'cloud'), (45,True,'fog'), (61,True,'rain'),
+                (71,True,'snow'), (95,True,'storm'), (None,True,None), (True,True,None)):
+            self.assertEqual(weather_symbol(code, is_day), expected)
+        for i, name in enumerate(BATTLE_SPRITES):
+            Image.new('RGBA',(25,30),(80+i*3,120,180,255)).save(self.root/'sprites'/(name+'.png'))
+        self.store.refresh(NOW)
+        weather = self.store.snapshot(NOW)
+        with patch('token_tv.local_art.ART_ROOT',self.root):
+            self.assertTrue(battle_available())
+            frames = [render_panel(weather, NOW, phase) for phase in range(32)]
+            for start in (0,16):
+                # The entire forecast stays readable while the arena animates.
+                readings = {frame.crop((5,80,123,124)).tobytes() for frame in frames[start:start+16]}
+                self.assertEqual(len(readings),1)
+            self.assertGreater(len({frame.crop((5,29,123,79)).tobytes() for frame in frames}),1)
+            old = render_panel(dict(weather,status='stale'),NOW)
+            self.assertNotEqual(old.crop((60,19,82,29)).tobytes(),frames[0].crop((60,19,82,29)).tobytes())
+            (self.root/'sprites'/('weather-symbol-snow.png')).unlink()
+            self.assertFalse(battle_available())
+            fallback = render_panel(weather,NOW)
+            self.assertNotEqual(fallback.tobytes(),frames[0].tobytes())

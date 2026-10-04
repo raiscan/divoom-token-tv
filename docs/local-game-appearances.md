@@ -10,7 +10,7 @@ Two optional local faces are installed on this computer:
 Both keep the five-screen layout and render at 128×128 per panel. Every percentage
 and bar means **quota used**, not HP remaining or game TP. Each quota window keeps
 its own reset countdown. Missing readings show `--` / `UNKNOWN`; cached readings
-are marked `OLD` and have a hatched bar. The animation loops in four seconds.
+are marked `OLD` and have a hatched bar. The original faces loop in four seconds.
 The 240×240 photo-display versions remain static. Deltarune uses horizontal quota
 bars only; its former duplicate vertical meter has been removed.
 
@@ -19,6 +19,12 @@ weekly windows share screen 1, and Codex's windows share screen 2. Each row has
 its own horizontal **USED** bar and reset countdown. The two bars are stacked at the
 bottom with **5H** and **1W** aligned at the far left. The percentages and reset times
 follow the same top-to-bottom order. Unreported windows stay `--`.
+Reset timers use a small looping-clock icon. Larger original battle sprites perform
+three four-second clips in a twelve-second loop, choosing a shuffled action order
+for each account each minute. The same account/minute selects the same sequence
+for the physical device and preview. Actions include idle, ACT, defend and Ralsei's
+pacify spell. Extra weapon/spell effects are clipped to the portrait area at the
+original proportions, keeping the character readable without covering the quota.
 Screen 3 is the Dark Fountain clock, screen 4 is Ralsei's party status, and screen 5
 is Elnina and Lanino's live weather broadcast. Additional accounts rotate as whole
 subscriptions, with three available account positions when weather occupies screen 5.
@@ -26,6 +32,13 @@ subscriptions, with three available account positions when weather occupies scre
 ## Elnina and Lanino weather
 
 Their animated broadcast matches the existing purple battle grid and pixel lettering.
+The original battle sprites flank a miniature forecast arena. The game's actual
+forecast symbols show sun, moon, rain and snow; an animated cloud handles cloudy,
+foggy and stormy conditions. Weather projectiles travel inward and turn into hearts,
+echoing the battle. The weather symbol follows the real forecast, while unknown
+conditions show `--`. Effects stay inside the arena, above the readable forecast.
+The original five-pose website animation remains a fallback when the optional battle
+assets are absent.
 It alternates every four seconds between current conditions and tomorrow's high/low
 temperatures and daily maximum precipitation probability for **Poole, Dorset, UK**.
 Temperatures are Celsius. Missing readings are `--`; a cached forecast after a failed
@@ -60,7 +73,9 @@ scripts are saved there for local maintenance. No artwork is downloaded while
 rendering or running the service. A face is listed only when all its required
 sprite files are present. Keep those files in place while the face is selected.
 
-All source artwork comes directly from official game websites:
+The original weather, fountain and static party artwork comes from official game
+websites. Additional action frames are original game sprites from the **PC / Computer**
+sprite sheets at The Spriters Resource, separate from its **Custom / Edited** category.
 
 - [Undertale Alarm Clock](https://undertale.com/alarmclock/): character portraits.
 - [Undertale homepage](https://undertale.com/): the dog and barking-dog images.
@@ -70,6 +85,20 @@ All source artwork comes directly from official game websites:
 - [Deltarune's official weather page](https://deltarune.com/weather/): the transparent
   Elnina and Lanino sprite animation (`weather.gif`, five original poses). Frames are
   extracted without repainting and uniformly scaled with nearest-neighbour sampling.
+- [Elnina & Lanino battle sprites](https://www.spriters-resource.com/pc_computer/deltarune/asset/273061/)
+  and [battle attacks / forecast symbols](https://www.spriters-resource.com/pc_computer/deltarune/asset/516984/):
+  original Chapter 3 game sprites. The game's forecast-card symbols, moon and cloud
+  mascots, and rain/crystal/heart projectiles guide the arena design. Exact source
+  crops and background removal are recorded in `weather-battle-extraction.json`;
+  `extract-weather-battle.py` keeps the extraction repeatable outside Git. Background
+  removal on the host sprites is limited to boundary-connected background pixels,
+  preserving internal white/black details.
+- [Kris](https://www.spriters-resource.com/pc_computer/deltarune/asset/110448/),
+  [Susie](https://www.spriters-resource.com/pc_computer/deltarune/asset/110471/) and
+  [Ralsei](https://www.spriters-resource.com/pc_computer/deltarune/asset/110469/): original
+  Chapters 1–2 battle animations. Original sheets, their URLs/checksums, extracted
+  frames, action sequences and exact cell crops remain in the local artwork directory,
+  in `sources.json`, `party-actions.json` and `party-actions-extraction.json`.
 
 Game artwork remains © Toby Fox and the games' artists. It is outside Git and
 is not included in the repository's software license or redistributed.
@@ -88,5 +117,8 @@ check optional installation, all panel roles, unknown/zero/stale readings,
 local-only loading and native animation payloads. `tests/test_weather.py` covers
 forecast normalization, zero/unknown/stale states, outages, date selection, private
 location-bound caching, paired quota windows, account rotation, and the full 32-frame
-weather transport and preview. The Times Gate browser checks
+weather transport and preview, and shuffled original action clips with a 96-frame
+combined preview that preserves both native loop timings. The Times Gate browser checks
 include every installed appearance and verify the complete five-screen strip.
+Battle-weather checks cover condition-specific symbols, night/unknown states,
+fallback assets and a numerical forecast region untouched by animated effects.

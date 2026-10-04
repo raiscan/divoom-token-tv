@@ -7,8 +7,9 @@ Two optional local faces are installed on this computer:
 - **Deltarune · Dark World**: a moving purple battle grid, official Kris, Susie and
   Ralsei battle sprites, coloured party meters and an animated Dark Fountain clock.
 
-Both keep the five-screen layout and render at 128×128 per panel. Every percentage
-and bar means **quota used**, not HP remaining or game TP. Each quota window keeps
+Both keep the five-screen layout and render at 128×128 per panel. Deltarune's quota
+percentages and bars show **quota left**; Undertale and the other appearances show
+**quota used**. These are service quotas, not game HP or TP. Each quota window keeps
 its own reset countdown. Missing readings show `--` / `UNKNOWN`; cached readings
 have a hatched bar and are marked `OLD` in Undertale or `I'M OLD!` in Deltarune.
 The original faces loop in four seconds.
@@ -17,14 +18,15 @@ bars only; its former duplicate vertical meter has been removed.
 
 This installation now uses **one screen per subscription**: Claude's 5-hour and
 weekly windows share screen 1, and Codex's windows share screen 2. Each row has
-its own horizontal **USED** bar and reset countdown. The two bars are stacked at the
+its own horizontal **LEFT** bar in Deltarune and reset countdown. The two bars are stacked at the
 bottom with **5H** and **1W** aligned at the far left. The percentages and reset times
 follow the same top-to-bottom order. When only one limit is reported (such as
 Codex's weekly limit), its screen uses a larger percentage, taller meter and larger
 character, without reserving an empty row for the other limit. The period remains
 beside the bar and the looping-clock icon marks its reset countdown. This adaptive
 layout also applies to the other Times Gate appearances. A reported limit with a
-missing reading still shows `--`; a real zero remains zero. Failed accounts keep
+missing reading still shows `--`; zero used means 100% left, and a fully used limit
+means 0% left. Positive fractions round up so 0% left always means exhaustion. Failed accounts keep
 their visible status and unknown meters, while cached readings retain their stale marker.
 Reset timers use a small looping-clock icon. Larger original battle sprites perform
 three four-second clips in a twelve-second loop, choosing a shuffled action order
@@ -45,6 +47,17 @@ Fresh data restores the usual characters. Missing optional Gerson art leaves the
 usual character and quote visible. His four-pose loop reuses existing native frames.
 Footer badges now say **SYNC** beside the last-check time and **LINK** beside the
 connection prompt; single-window quota footers use the looping-clock icon.
+
+If **any reported limit on a fresh subscription reaches 0% left**, its character
+holds the original DOWN pose: Susie or Kris kneels, while Ralsei leaves his clothes
+on the ground. A **DOWN** marker identifies the exhausted account. The character
+resumes the normal ACT sequence once all reported balances are above zero. Unknown
+limits cannot trigger DOWN; stale readings continue to use Gerson. DOWN poses live
+in a separate `party-downed.json`, so healthy accounts never choose them as random
+ACTs. They reuse the existing animation frames and retain the original proportions
+and shorter silhouette. If optional DOWN art is missing, the numeric balance and
+DOWN marker still identify exhaustion. The dashboard's provider data remains in
+its original `used_percent` format; the Deltarune renderer derives the balance.
 
 ## Elnina and Lanino weather
 
@@ -116,6 +129,10 @@ sprite sheets at The Spriters Resource, separate from its **Custom / Edited** ca
   Chapters 1–2 battle animations. Original sheets, their URLs/checksums, extracted
   frames, action sequences and exact cell crops remain in the local artwork directory,
   in `sources.json`, `party-actions.json` and `party-actions-extraction.json`.
+  Original DOWN cells from these same sheets are recorded in
+  `party-downed-extraction.json`, with source checksums, background removal and
+  alignment within the normal idle canvas. This keeps kneeling poses shorter and
+  avoids stretching Ralsei's discarded clothes into a full-height character.
 - [Old Man Gerson](https://www.spriters-resource.com/pc_computer/deltarune/asset/273902/page-2/):
   original Darkner speaking/laughing poses from the PC / Computer game sheet.
   `gerson-extraction.json` records the original URL, checksum, four source cells

@@ -1,7 +1,7 @@
 """Personal Undertale / Deltarune faces using optional, local official artwork.
 
 Art remains outside Git. The local sources.json and extraction.json record its
-provenance. Percentages and bars always mean quota USED, rather than game HP/TP.
+provenance. Deltarune percentages/bars show quota remaining; Undertale shows used.
 """
 import functools
 import math
@@ -112,6 +112,26 @@ def duration(window, now):
             else f'{minutes//60}H {minutes%60}M')
 
 
+def remaining_percent(used):
+    """Unknown stays unknown; an exhausted balance is a real zero."""
+    if isinstance(used, bool) or not isinstance(used, (int, float)) or not math.isfinite(used):
+        return None
+    return max(0, min(100, 100-used))
+
+
+def account_downed(row):
+    # Cached exhaustion cannot establish the current balance after a reset.
+    return row['status']=='ok' and any(remaining_percent(w.get('used_percent'))==0
+                                     for w in row.get('windows', []))
+
+
+def quota_number(value, remaining=False):
+    if value is None:
+        return '--'
+    # A positive fraction must not display zero while its character is still up.
+    return str(math.ceil(value)) if remaining else f'{value:.0f}'
+
+
 def used_bar(draw, box, used, color, stale=False):
     x,y,right,bottom = box
     draw.rectangle(box,outline=WHITE)
@@ -218,15 +238,19 @@ def _deltarune(panel,snapshot,date,now,phase):
         name={'claude':'susie','codex':'kris','grok':'ralsei'}[row['provider']]
         color={'claude':'#ff4fdc','codex':CYAN,'grok':'#7cff8b'}[row['provider']]
         gerson = old and put_gerson(canvas,(11,31,43,51),phase)
+        downed = account_downed(row)
         if not gerson:
-            put_sprite(canvas,name,(15,31,35,51),phase,True)
+            from token_tv.party_actions import put_character
+            if not (downed and put_character(canvas,name,row.get('key',row['alias']),now,phase,(11,31,43,51),downed=True)):
+                put_sprite(canvas,name,(15,31,35,51),phase,not downed)
         label(draw,(32,86),'GERSON' if gerson else name,align='center',color=color,width=55)
-        used=window['used_percent'] if window else None
-        label(draw,(120,47),f'{used:.0f}%' if used is not None else '--',scale=3,align='right',width=71)
-        label(draw,(120,76),'USED' if used is not None else 'UNKNOWN',align='right',width=67)
+        left=remaining_percent(window['used_percent']) if window else None
+        label(draw,(120,47),quota_number(left,True)+('%' if left is not None else ''),scale=3,align='right',width=71)
+        label(draw,(120,76),'LEFT' if left is not None else 'UNKNOWN',align='right',width=67)
         label(draw,(120,88),'RESET IN',align='right',width=62)
-        used_bar(draw,(7,97,120,103),used,color,old)
+        used_bar(draw,(7,97,120,103),left,color,old)
         reset_footer(draw,duration(window,now),True)
+        if downed:label(draw,(8,20),'DOWN',color=GOLD)
     elif kind=='clock':
         image=ImageOps.fit(sprite('fountain-'+str(phase*5//FRAMES)),(118,118),method=Image.Resampling.NEAREST,centering=(.5,.6))
         canvas.paste(image,(5,5));draw=ImageDraw.Draw(canvas)
@@ -303,23 +327,27 @@ def render_account(row, now, phase=0, style='deltarune'):
         choices = reported
     portrait_height = 78 if single else 65
     old = row['status'] == 'stale'
+    downed = style == 'deltarune' and account_downed(row)
     gerson = style == 'deltarune' and old and put_gerson(canvas,(7,27,61,portrait_height),phase)
     if not gerson and style in ('undertale', 'deltarune'):
         name = ({'claude':'susie', 'codex':'kris', 'grok':'ralsei'} if style == 'deltarune'
                 else {'claude':'papyrus', 'codex':'sans', 'grok':'toriel'})[row['provider']]
         from token_tv.party_actions import put_character
-        if style != 'deltarune' or not put_character(canvas,name,row.get('key',row['alias']),now,phase,(7,27,61,portrait_height)):
-            put_sprite(canvas, name, (8, 26, 55, portrait_height), phase % FRAMES, True)
+        actor_options = {'downed': True} if downed else {}
+        if style != 'deltarune' or not put_character(canvas,name,row.get('key',row['alias']),now,phase,(7,27,61,portrait_height),**actor_options):
+            put_sprite(canvas, name, (8, 26, 55, portrait_height), phase % FRAMES, not downed)
     elif not gerson:
         art = bot_sprite(row['provider'], 39 if single else 30, 60 if single else 46)
         canvas.paste(art, (9, 30), art)
     ink = {'claude':'#ff4fdc', 'codex':CYAN, 'grok':'#7cff8b'}[row['provider']] if style == 'deltarune' else color
-    label(draw, (120, 30 if single else 20), 'USED %' if single else 'USED', color=ink, align='right')
+    caption = 'LEFT' if style == 'deltarune' else 'USED'
+    label(draw, (120, 30 if single else 20), caption+' %' if single else caption, color=ink, align='right')
     for index, (window, period) in enumerate(choices):
         y = 43 if single else 31 + index * 32
         used = window['used_percent'] if window else None
+        balance = remaining_percent(used) if style == 'deltarune' else used
         draw.rectangle((69 if single else 73, y - 2, 121, 90 if single else y + 24), fill='#050008')
-        value = f'{used:.0f}' + ('' if single else '%') if used is not None else '--'
+        value = quota_number(balance,style=='deltarune') + ('' if single or balance is None else '%')
         label(draw, (120, y), value, 3 if single else 2, align='right', width=54 if single else 75)
         text = duration(window, now)
         text_width = min(len(text), 7) * 6 - 1
@@ -330,9 +358,11 @@ def render_account(row, now, phase=0, style='deltarune'):
         bar_height = 13 if single else 10
         draw.rectangle((6, bar_y - 1, 121, bar_y + bar_height + 1), fill='#050008')
         label(draw, (8, bar_y + (4 if single else 2)), period[:3], color=ink, width=18)
-        used_bar(draw, (28, bar_y, 120, bar_y + bar_height), used, ink, old)
+        used_bar(draw, (28, bar_y, 120, bar_y + bar_height), balance, ink, old)
     if old:
         label(draw, (8, 20), STALE_QUOTE if style == 'deltarune' else 'OLD', color=GOLD)
+    elif downed:
+        label(draw, (8, 20), 'DOWN', color=GOLD)
     elif row['status'] not in ('ok', 'stale'):
         label(draw, (8, 20), STATUS.get(row['status'], 'NO DATA'), color=GOLD, width=75)
     if style == 'gameboy':
@@ -353,11 +383,14 @@ def render_stock(snapshot,style):
               else {'claude':'susie','codex':'kris','grok':'ralsei'})[row['provider']]
         old = row['status']=='stale'
         if not (style=='deltarune' and old and put_gerson(canvas,(12,y+13,38,43))):
-            put_sprite(canvas,name,(12,y+13,38,43))
-        window=max(row['windows'],key=lambda w:w['used_percent'],default=None) if row['status'] in ('ok','stale') else None
+            from token_tv.party_actions import put_character
+            if not (style=='deltarune' and account_downed(row) and put_character(canvas,name,row.get('key',row['alias']),now,0,(12,y+13,38,43),downed=True)):
+                put_sprite(canvas,name,(12,y+13,38,43))
+        window=max(row['windows'],key=lambda w:w['used_percent'] if w['used_percent'] is not None else -1,default=None) if row['status'] in ('ok','stale') else None
         used=window['used_percent'] if window else None
-        label(draw,(220,y+24),f'{used:.0f}%' if used is not None else '--',3,align='right',width=157)
+        balance=remaining_percent(used) if style=='deltarune' else used
+        label(draw,(220,y+24),quota_number(balance,style=='deltarune')+('%' if balance is not None else ''),3,align='right',width=157)
         old_text = (STALE_QUOTE if style=='deltarune' else 'OLD')+' ' if old else ''
-        label(draw,(56,y+53),old_text+(window['label'] if window else STATUS.get(row['status'],'NO DATA')),color=GOLD)
-        used_bar(draw,(10,y+65,229,y+70),used,GOLD if style=='undertale' else PURPLE,row['status']=='stale')
+        label(draw,(56,y+53),old_text+('LEFT ' if style=='deltarune' else '')+(window['label'] if window else STATUS.get(row['status'],'NO DATA')),color=GOLD)
+        used_bar(draw,(10,y+65,229,y+70),balance,GOLD if style=='undertale' else PURPLE,row['status']=='stale')
     return canvas

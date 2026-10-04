@@ -11,8 +11,8 @@ FRAMES = 48
 
 
 @functools.lru_cache(maxsize=4)
-def _manifest(root):
-    path = root / 'party-actions.json'
+def _manifest(root, filename='party-actions.json'):
+    path = root / filename
     if not path.is_file():
         return {}
     try:
@@ -46,21 +46,28 @@ def sequence(character, identity, now):
     return actions[:3]
 
 
-def put_character(canvas, character, identity, now, phase, box):
-    """Three four-second actions; the same minute/identity matches device and preview."""
+def put_character(canvas, character, identity, now, phase, box, *, downed=False):
+    """Healthy ACT clips, or a held DOWN pose, shared by device and preview."""
     from token_tv.local_games import sprite
-    actions = sequence(character, identity, now)
-    if not actions:
-        return False
-    action = actions[(phase // 16) % len(actions)]
-    names = _manifest(local_art.ART_ROOT)[character][action]
+    if downed:
+        action = 'downed'
+        names = _manifest(local_art.ART_ROOT, 'party-downed.json').get(character, {}).get(action, [])
+        if not names:
+            return False
+    else:
+        actions = sequence(character, identity, now)
+        if not actions:
+            return False
+        action = actions[(phase // 16) % len(actions)]
+        names = _manifest(local_art.ART_ROOT)[character][action]
     index = min(len(names) - 1, (phase % 16) * len(names) // 16)
     image = sprite(names[index])
     x, y, width, height = box
     # Every frame in a clip has the same source canvas. Scale once uniformly,
     # preserving the artist's motion and allowing a larger-than-source sprite.
-    scale = height / image.height
-    image = image.resize((round(image.width * scale), height), Image.Resampling.NEAREST)
+    scale = min(width / image.width, height / image.height) if downed else height / image.height
+    image = image.resize((max(1, round(image.width * scale)), max(1, round(image.height * scale))),
+                         Image.Resampling.NEAREST)
     if image.width > width:
         # Keep the character large; only overflowing weapon/spell effects are
         # clipped to the portrait area, never stretched across the quota text.

@@ -43,7 +43,7 @@ async function themes_checks(page){
 }
 async function demo_checks(browser,demo){
  const page=await browser.newPage({viewport:{width:375,height:900}});let posts=0;page.on('request',r=>{if(r.method()==='POST')posts++});
- await page.goto(demo);await page.waitForSelector('#gallery .theme-card');for(const t of await page.locator('.theme-thumb').all())await t.scrollIntoViewIfNeeded();await page.waitForFunction(()=>[...document.querySelectorAll('.theme-thumb')].length===6&&[...document.querySelectorAll('.theme-thumb')].every(i=>i.complete&&i.naturalWidth===240));await page.locator('.theme-card button').first().click();
+ await page.goto(demo);await page.waitForSelector('#gallery .theme-card');for(const t of await page.locator('.theme-thumb').all())await t.scrollIntoViewIfNeeded();await page.waitForFunction(()=>[...document.querySelectorAll('.theme-thumb')].length===7&&[...document.querySelectorAll('.theme-thumb')].every(i=>i.complete&&i.naturalWidth===240));await page.locator('.theme-card button').first().click();
  await page.waitForFunction(()=>{const i=document.querySelector('#frame');return i.complete&&i.naturalWidth===240});
  assert.equal(await page.locator('#apply').isVisible(),false);assert.match(await page.locator('.theme-actions a',{hasText:'Get'}).first().getAttribute('href'),/docs\/setup\.md$/);assert.equal(posts,0);
  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:`${out}/demo-themes-375.png`,fullPage:true});await page.close();

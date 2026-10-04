@@ -717,3 +717,18 @@ h1{margin:0;font:600 48px/1.04 var(--font-display);letter-spacing:-.03em;color:v
 .theme-actions .control{min-height:28px;padding:4px 12px;font-size:12px}
 .theme-actions a{color:var(--ink-2)}.theme-update{color:var(--ink-3)}
 [data-demo] #apply{display:none}
+
+/* A Times Gate gallery card previews the complete five-screen device. */
+.gallery[data-device=times-gate] .theme-list{grid-template-columns:minmax(0,1fr);gap:16px}
+.gallery[data-device=times-gate] .theme-card{display:grid;grid-template-columns:minmax(0,640px) minmax(150px,1fr);grid-template-areas:"preview title" "preview likes" "preview actions";column-gap:20px;align-items:start}
+.gallery[data-device=times-gate] .theme-thumb{grid-area:preview;align-self:center;margin:0;aspect-ratio:auto}
+.gallery[data-device=times-gate] .theme-thumb.wide-preview{aspect-ratio:5}
+.gallery[data-device=times-gate] .theme-title{grid-area:title;flex-wrap:wrap}
+.gallery[data-device=times-gate] .theme-likes{grid-area:likes}
+.gallery[data-device=times-gate] .theme-actions{grid-area:actions}
+.shell:has(.times-gate-panel:not([hidden])) .workspace{grid-template-columns:minmax(0,1fr)}
+.clock-panel.times-gate-panel{position:static;order:-1;width:100%;max-width:none}
+.times-gate-panel select{max-width:320px}
+@media(max-width:900px){
+ .gallery[data-device=times-gate] .theme-card{grid-template-columns:minmax(0,1fr);grid-template-areas:"preview" "title" "likes" "actions";row-gap:8px}
+}

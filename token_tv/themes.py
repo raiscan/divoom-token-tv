@@ -80,10 +80,10 @@ def ghost(text):
 class Canvas:
     """Background, a blurred bloom layer and a crisp ink layer, composited once."""
 
-    def __init__(self, background):
-        self.base = Image.new('RGBA', (SIZE, SIZE), background)
-        self.ink = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
-        self.bloom = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+    def __init__(self, background, size=SIZE):
+        self.base = Image.new('RGBA', (size, size), background)
+        self.ink = Image.new('RGBA', (size, size), (0, 0, 0, 0))
+        self.bloom = Image.new('RGBA', (size, size), (0, 0, 0, 0))
         self.back = ImageDraw.Draw(self.base)
         self.draw = ImageDraw.Draw(self.ink)
         self.glow = ImageDraw.Draw(self.bloom)
@@ -282,7 +282,7 @@ def gauge(cv, box, used, colors, *, gap=3, shape='rect', radius=2, skew=0, track
         light = Image.new('RGBA', area, (255, 255, 255, 0))
         ImageDraw.Draw(light).rectangle((0, 0, width, 1), fill=(255, 255, 255, 110))
         ImageDraw.Draw(light).rectangle((0, height - 2, width, height), fill=(0, 0, 0, 80))
-        layer = Image.new('RGBA', (SIZE, SIZE), (0, 0, 0, 0))
+        layer = Image.new('RGBA', cv.ink.size, (0, 0, 0, 0))
         layer.paste(light, (x0, y0), fill_mask)
         cv.ink.alpha_composite(layer)
     if split:
@@ -501,4 +501,9 @@ def render_hud(snapshot):
     return cv.finish(blur=2)
 
 
-RENDERERS = {'digital': render_digital, 'neon': render_neon, 'retro': render_retro, 'hud': render_hud}
+def render_gameboy(snapshot):
+    from token_tv.gameboy import render_gameboy as render
+    return render(snapshot)
+
+
+RENDERERS = {'gameboy': render_gameboy, 'digital': render_digital, 'neon': render_neon, 'retro': render_retro, 'hud': render_hud}

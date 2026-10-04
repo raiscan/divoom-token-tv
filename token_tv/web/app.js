@@ -238,13 +238,16 @@ function paintClock(forceImage = false) {
  const style = clockChoice || displayInfo?.style;
  const timesGate = displayInfo?.device_type === 'times-gate';
  $('#frame').closest('.lcd').classList.toggle('times-gate-lcd', timesGate);
- $('#clock-dimensions').textContent = timesGate ? 'Five 128 × 128 screens · Centre clock and separate usage windows.' : '240 × 240 · The web appearance is separate from your clock style.';
+ $('#clock-panel').classList.toggle('times-gate-panel', timesGate);
+ const device = timesGate ? 'times-gate' : 'photo';
+ if ($('#gallery').dataset.device !== device) {$('#gallery').dataset.device = device; paintThemes()}
+ $('#clock-dimensions').textContent = timesGate ? 'Five 128 × 128 screens · Each appearance renders at native resolution.' : '240 × 240 · The web appearance is separate from your clock style.';
  $('#clock-style').disabled = applying || !displayInfo; $('#apply').disabled = DEMO || applying || !displayInfo || (style === displayInfo.style && displayInfo.status !== 'error' && !clockError);
  $('#apply').textContent = applying ? 'Sending image…' : 'Apply to clock'; $('#apply').dataset.state = applying ? 'loading' : clockError || displayInfo?.status === 'error' ? 'error' : displayInfo?.status === 'ok' ? 'success' : 'default';
  $('#display-state').textContent = DEMO ? 'Demo · install TokenTV to drive a real clock' : clockError ? 'Could not apply. Please retry.' : !displayInfo ? 'Clock status unavailable' : style !== displayInfo.style ? 'Preview only · Apply to send' : displayInfo.status === 'queued' ? 'Sending image…' : displayInfo.status === 'error' ? 'Clock upload failed. Please retry.' : displayInfo.status === 'preview_only' ? 'Preview only · No clock connected' : 'Image sent · ' + styleName(displayInfo.applied_style);
  if (style && !$('#clock-panel').hidden && (forceImage || style !== lastImageStyle || Date.now() - lastImageAt > 30000)) {lastImageStyle = style; lastImageAt = Date.now(); $('#frame').src = DEMO ? displayInfo.frames?.[style] || `/frames/${encodeURIComponent(style)}.jpg` : '/frame/0.jpg?style=' + encodeURIComponent(style) + '&t=' + lastImageAt; $('#frame').alt = styleName(style) + ' live clock preview'}
 }
-const styleName = s => s === 'retro' ? 'Pixel Retro' : s === 'hud' ? 'Sci-Fi HUD' : s ? s[0].toUpperCase() + s.slice(1) : 'Unknown';
+const styleName = s => s === 'gameboy' ? 'Game Boy' : s === 'retro' ? 'Pixel Retro' : s === 'hud' ? 'Sci-Fi HUD' : s ? s[0].toUpperCase() + s.slice(1) : 'Unknown';
 let displayPolling = false;
 async function refreshDisplay(forceImage = false) {if (displayPolling) return; displayPolling = true; try {const r = await fetch(DEMO ? '/demo-display.json' : '/display', {cache:'no-store'}); if (!r.ok) throw Error(); const data = await r.json(); const dirty = displayInfo && clockChoice !== displayInfo.style; displayInfo = data; if (!clockChoice || !dirty) clockChoice = data.style; const select = $('#clock-style'); if (!select.options.length) for (const s of data.styles) {const o = el('option', styleName(s)); o.value = s; select.append(o)} select.value = clockChoice; paintClock(forceImage); if (DEMO && themeData && !lastThumbFrames) {lastThumbFrames = true; paintThemes()}} catch {$('#display-state').textContent = 'Clock status unavailable'} finally {displayPolling = false}}
 $('#clock-style').onchange = e => {clockChoice = e.target.value; clockError = false; paintClock(true); paintThemes()};
@@ -271,7 +274,7 @@ function paintThemes() {
   const item = el('li', undefined, 'theme-card'); item.dataset.id = t.id;
   const usable = t.installed && !t.needs_update;
   const src = usable ? thumbSrc(t.id) : t.preview_url;
-  if (src) {const img = el('img', undefined, 'theme-thumb'); img.src = src; img.alt = t.name + ' clock face'; img.width = 240; img.height = 240; img.loading = 'lazy'; item.append(img)}
+  if (src) {const img = el('img', undefined, 'theme-thumb'); img.src = src; img.alt = t.name + ' clock face'; const wide = usable && displayInfo?.device_type === 'times-gate'; img.width = wide ? 640 : 240; img.height = wide ? 128 : 240; img.classList.toggle('wide-preview', wide); img.loading = 'lazy'; item.append(img)}
   const head = el('div', undefined, 'theme-title'); head.append(el('strong', t.name), el('span', t.local ? 'Local' : 'by ' + t.author, 'theme-author')); item.append(head);
   item.append(el('p', likeText(t), 'theme-likes'));
   const actions = el('div', undefined, 'theme-actions');

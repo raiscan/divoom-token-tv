@@ -32,6 +32,7 @@ class TimesGateTests(unittest.TestCase):
         self.calls = []
         self.current_id = 20
         self.error = 0
+        self.reject_offset = None
         owner = self
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args):
@@ -40,11 +41,13 @@ class TimesGateTests(unittest.TestCase):
                 data = json.loads(self.rfile.read(int(self.headers['Content-Length'])))
                 owner.calls.append((self.path, data))
                 reply = {'error_code': owner.error}
+                if data['Command'] == 'Draw/SendHttpGif' and data['PicOffset'] == owner.reject_offset:
+                    reply['error_code'] = 'busy'
                 if data['Command'] == 'Channel/GetIndex':
                     reply['SelectIndex'] = [0, 1, 0, 2, 0]
                 if data['Command'] == 'Draw/GetHttpGifId':
                     reply['PicId'] = owner.current_id
-                if data['Command'] == 'Draw/SendHttpGif' and owner.error == 0:
+                if data['Command'] == 'Draw/SendHttpGif' and reply['error_code'] == 0:
                     owner.current_id = data['PicID']
                 body = json.dumps(reply).encode()
                 self.send_response(200)
@@ -104,6 +107,28 @@ class TimesGateTests(unittest.TestCase):
         for bad in ({}, {'SelectIndex': [0]}, {'SelectIndex': [False] * 5}):
             with self.assertRaises(ValueError):
                 device.restore(dict(original, **bad) if bad else {})
+
+    def test_animation_uses_one_id_per_panel_and_retries_partial_upload(self):
+        output = io.BytesIO()
+        Image.new('RGB', (128, 128), 'red').save(output, format='GIF', save_all=True,
+            append_images=[Image.new('RGB', (128, 128), 'blue')], duration=200, loop=0)
+        frames = times_gate.render_panels(fixture(), now=1791079200)
+        frames[0] = output.getvalue()
+        device = times_gate.TimesGateDisplay(self.url)
+        self.reject_offset = 1
+        with self.assertRaises(ValueError):
+            device.publish(frames)
+        self.reject_offset = None
+        self.calls.clear()
+        self.assertEqual(len(device.publish(frames)), 5)
+        uploads = [d for _, d in self.calls if d['Command'] == 'Draw/SendHttpGif']
+        self.assertEqual(len(uploads), 6)
+        self.assertEqual([d['PicOffset'] for d in uploads[:2]], [0, 1])
+        self.assertEqual([d['PicNum'] for d in uploads[:2]], [2, 2])
+        self.assertEqual([d['PicSpeed'] for d in uploads[:2]], [200, 200])
+        self.assertEqual(uploads[0]['PicID'], uploads[1]['PicID'])
+        self.assertGreater(uploads[2]['PicID'], uploads[1]['PicID'])
+        self.assertEqual(device.publish(frames), [])
 
     def test_selection_preserves_missing_stale_and_overflow_windows(self):
         data = fixture()

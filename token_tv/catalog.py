@@ -95,7 +95,7 @@ def theme_list(installed=STYLES, catalog=None, votes=None, version=__version__, 
     for id in list(installed) + [i for i in known if i not in installed]:
         meta = known.get(id)
         if meta is None:
-            themes.append({'id': id, 'name': id.replace('-', ' ').title(), 'author': None, 'local': True,
+            themes.append({'id': id, 'name': 'Game Boy' if id == 'gameboy' else id.replace('-', ' ').title(), 'author': None, 'local': True,
                            'installed': True, 'needs_update': False, 'min_version': None, 'added_at': None,
                            'source_url': None, 'license': None, 'preview_url': None,
                            'likes': None, 'likes_state': 'local', 'likes_counted_at': None, 'like_url': None})

@@ -23,9 +23,16 @@ panel shows update status. Missing data remains unknown, and cached readings say
 More than four usage windows rotate in groups every five minutes, without merging accounts.
 
 The dashboard at http://127.0.0.1:8787 shows the same five panels in **Clock display**.
-Pixel Retro reuses TokenTV's actual provider bots, landscapes, pixel alphabet and quota
-colours, laid out at native resolution. The other style choices change the panel background
-palette; Space is static on this device. This installation uses Pixel Retro.
+All seven appearances have native layouts: Pixel, Digital, Neon, Pixel Retro, Sci-Fi HUD,
+Space and Game Boy. Pixel Retro's landscapes are uniformly scaled and cropped around the
+sunset and moon, preserving their proportions. Digital uses the original LCD numerals, Neon
+uses glowing frames, HUD uses its angled grid, and Game Boy uses the four-shade LCD palette
+from the bundled example. Space animates stars and helmeted mascots in a four-second loop.
+
+The gallery and clock preview show the complete 640×128 strip. Selecting **Preview** never
+changes the physical display; **Apply to clock** sends your choice. This installation keeps
+Pixel Retro selected. Source Game Boy images use exactly four shades; JPEG transport can
+introduce small colour variations on the physical LCDs.
 Provider usage refreshes every five minutes, while the clock and reset timers update every
 minute. Unchanged panels are resent after five minutes to recover from missed updates;
 a changed device picture ID triggers immediate reassertion on the next minute tick.
@@ -73,6 +80,9 @@ reservation for the device avoids that problem.
 node --check token_tv/web/app.js
 ```
 
-`tests/test_times_gate.py` uses a local HTTP device fixture: native JPEG payloads, screen targeting,
+`tests/test_times_gate.py` uses a local HTTP device fixture: native JPEG and animated GIF payloads, screen targeting,
 picture ID ordering, reboots, periodic recovery, device error handling, backup identity,
-unknown/stale data, overflow rotation, configuration validation and dashboard preview.
+unknown/stale data, overflow rotation, configuration validation and dashboard preview. `tests/test_times_gate_faces.py` covers
+artwork proportions, unknown/stale states across appearances, the Game Boy palette, animated
+previews and the full Game Boy preview/apply flow. `scripts/test_times_gate_browser.cjs` checks
+the wide gallery, all seven previews and responsive layouts against a local fixture.

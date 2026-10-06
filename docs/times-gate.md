@@ -55,7 +55,7 @@ confirm that the panels are visible on the physical device.
 
 ## This installation
 
-The stable checkout is `/home/farrell/code/projects/divoom-token-tv` and its private remote
+The stable checkout is `/home/farrell/code/projects/divoom-token-tv` and its public remote
 is https://github.com/raiscan/divoom-token-tv. The original repository remains the `upstream`
 remote. Runtime account metadata and state are outside Git under `~/.config/token-tv/`.
 Only images and percentages go to the device. The dashboard listens on localhost.

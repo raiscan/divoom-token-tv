@@ -88,7 +88,9 @@ Do not combine the custom forecast with `--weather-clock`; that would select a n
 face over the uploaded animation. The phone token remains in its private file.
 
 The dashboard lists each as **Local**. Preview does not apply it to the device.
-The new code is committed locally; this change has not been pushed to GitHub.
+The renderer code is available in the public
+[Times Gate adaptation](https://github.com/raiscan/divoom-token-tv).
+The original game artwork remains local and is not distributed with the code.
 
 ## Artwork and provenance
 

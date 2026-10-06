@@ -66,13 +66,24 @@ Pixel Retro, Sci-Fi HUD, Space, and Game Boy**. Space is animated. Pixel Retro k
 its sunset and moon in proportion; Game Boy uses a four-shade LCD palette. Missing
 readings stay unknown, and cached readings are visibly marked as stale.
 
-## Optional Undertale and Deltarune appearances
+## Undertale and Deltarune fan appearances
 
-The renderer supports two additional appearances when the required artwork is
-installed locally. **Original game sprites and their extraction scripts are not
-included in this repository**, and the app does not download them at runtime.
-A fresh clone includes the seven standard appearances above; the game appearances
-are listed only when their required local sprite files are present.
+Both game appearances now include the selected original character sprites and
+animation frames, so they work from a fresh clone or Python package installation.
+There are no artwork downloads during setup or rendering.
+
+**Undertale · Determination** uses Sans, Papyrus, Toriel, Napstablook, and the
+Annoying Dog with battle boxes, a red SOUL, and a glinting save-point clock.
+
+![Undertale fan appearance across five screens, using sample data](docs/images/times-gate-undertale.gif)
+
+**Deltarune · Dark World** brings Kris, Susie, and Ralsei into a purple battle grid,
+with an animated Dark Fountain, Darkner Gerson for stale readings, and Elnina and
+Lanino's weather broadcast.
+
+![Deltarune fan appearance with character actions and weather, using sample data](docs/images/times-gate-deltarune.gif)
+
+*Both previews use synthetic quota readings; the weather preview is also sample data.*
 
 The current Deltarune setup uses this arrangement:
 
@@ -91,9 +102,8 @@ bring in Darkner Gerson with **“I'M OLD!”**, retaining the cached numbers.
 Undertale and the standard appearances show **percent used**.
 
 The weather broadcast uses Open-Meteo forecasts in Celsius, matching the purple
-battle layout with animated weather symbols. With the required local weather
-artwork installed, stop the existing runner and use this example for Poole, UK;
-change the city and coordinates for your own location:
+battle layout with animated weather symbols. Stop the existing runner and use
+this example for Poole, UK; change the city and coordinates for your own location:
 
 ```sh
 .venv/bin/token-tv run --config ~/.config/token-tv/times-gate.json \
@@ -106,9 +116,14 @@ Select Deltarune in **Clock display**. The custom forecast occupies screen 5 whi
 the controller runs. Built-in Divoom weather is also available as a separate setup
 with TokenTV controlling screens 1–4; see the [Times Gate guide](docs/times-gate.md).
 
-[Local game appearances](docs/local-game-appearances.md) documents required artwork,
-local storage, provenance, animation behaviour, and weather options. Game artwork
-remains © Toby Fox and the games' artists, outside Git and the software license.
+These are **unofficial, non-commercial fan appearances**, using characters and
+artwork © Toby Fox, Temmie Chang, and the games' artists. This project has no
+official affiliation or endorsement. The game artwork is **excluded from the
+software's MIT license**; see its [artwork notice](token_tv/assets/game-art/NOTICE.md)
+and [source credits](token_tv/assets/game-art/sources.json).
+
+[Game appearances guide](docs/local-game-appearances.md) covers provenance,
+animation behaviour, local artwork overrides, and weather options.
 
 ## Try it without a clock or accounts
 
@@ -138,4 +153,5 @@ Based on [click6067-ship-it/token-tv](https://github.com/click6067-ship-it/token
 The Times Gate transport draws on
 [Divoom Gaming Gate](https://github.com/adiastra/divoom-gaming-gate).
 Software is [MIT licensed](LICENSE); bundled fonts retain their own license notices.
-Credentials, device tokens, runtime state, and optional game artwork stay outside Git.
+Credentials, device tokens, and runtime state stay outside Git. Bundled game
+artwork retains its separate ownership and notice above.

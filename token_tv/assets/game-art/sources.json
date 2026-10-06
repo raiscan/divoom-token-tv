@@ -1,0 +1,223 @@
+{
+  "copyright": "Artwork © Toby Fox, Temmie Chang and the games’ artists. Included in this unofficial fan project; excluded from the software’s MIT license. No official endorsement or redistribution license is asserted.",
+  "sources": [
+    {
+      "name": "sans",
+      "url": "https://undertale.com/assets/images/alarmclock-sans-select.png",
+      "sha256": "b4852692baecc58a5385eb91fa0a0d8082d757084ba8df516f43506b3b2747d9"
+    },
+    {
+      "name": "papyrus",
+      "url": "https://undertale.com/assets/images/alarmclock-papyrus-select.png",
+      "sha256": "0889e8bd5b81e06e3f6796944875c1bfe02d331dbb21229586d8df6d185d996c"
+    },
+    {
+      "name": "toriel",
+      "url": "https://undertale.com/assets/images/alarmclock-toriel-select.png",
+      "sha256": "0579fee08a25a556aad18dcd84c11186d202e93abbae40e0b81cec25b9339b93"
+    },
+    {
+      "name": "blook",
+      "url": "https://undertale.com/assets/images/alarmclock-blook-select.png",
+      "sha256": "9634404f5312a93aefa2d1da0c477d626a126963da25d748578924c2221f546f"
+    },
+    {
+      "name": "dog",
+      "url": "https://undertale.com/assets/images/dog.png",
+      "sha256": "56e23648037603025ba0696113201b2badf7bf6629f0b1dfa681ec51bd07a36b"
+    },
+    {
+      "name": "dog-bark",
+      "url": "https://undertale.com/assets/images/dog-bark.png",
+      "sha256": "e89b6395f8e0fd1337e98eb5a4c12c30525e7be5cb40f0351053c175c2402bbe"
+    },
+    {
+      "name": "battle1",
+      "url": "https://deltarune.com/assets/images/c2-01.png",
+      "sha256": "e9e4b3d18dcbef861d6184866a4b70173103d4e351015d4198203d7fb1eed20f"
+    },
+    {
+      "name": "battle2",
+      "url": "https://deltarune.com/assets/images/c2-02.png",
+      "sha256": "0e81691e1489b98fa73f933748e0025a8db5e986833a15f90e1765201bff9204"
+    },
+    {
+      "name": "battle3",
+      "url": "https://deltarune.com/assets/images/c2-03.png",
+      "sha256": "d3eefd2f3af18fc8468cc94affb148f8bbc8cc6053679804516c1dea0164532d"
+    },
+    {
+      "name": "battle4",
+      "url": "https://deltarune.com/assets/images/c2-04.png",
+      "sha256": "7aa254f1bb2982e6ff5c73d9fadb9568ae00847bc7d1a0b511299c509360cd6b"
+    },
+    {
+      "name": "fountain",
+      "url": "https://deltarune.com/assets/images/key-art.gif",
+      "sha256": "d3fed3dfd3b63aa0f236e739172a0e5680aa16b49580e59d43f817a176ee5d82"
+    },
+    {
+      "name": "undertale-battle",
+      "url": "https://undertale.com/assets/images/screen3.png",
+      "sha256": "4bdefa6cd969e285db7b631a5f01dc149601cc0c084614938c3fa6cdedb195c3"
+    },
+    {
+      "name": "weather.png",
+      "url": "https://deltarune.com/assets/images/weather.png",
+      "sha256": "76a3f3aaae304e437b43ec2f1825fc929cdb7631fcd74d0289d4b315676a5d96"
+    },
+    {
+      "name": "weather.gif",
+      "url": "https://deltarune.com/assets/images/weather.gif",
+      "sha256": "1e93d54c333c80769b72eea755310cc6e917c0754b5448f4e2c881c8b63bffe3"
+    },
+    {
+      "name": "kris-original-sheet",
+      "url": "https://www.spriters-resource.com/media/assets/107/110448.png?updated=1787956143",
+      "page": "https://www.spriters-resource.com/pc_computer/deltarune/asset/110448/",
+      "sha256": "ecb4f9cae7f4052734a8bb2422b332cbf9ff0312b4f974a4ad352a2494d4c8c7",
+      "description": "Original Deltarune game sprites compiled in a PC/Computer sheet, not Custom/Edited artwork."
+    },
+    {
+      "name": "ralsei-original-sheet",
+      "url": "https://www.spriters-resource.com/media/assets/107/110469.png?updated=1765871691",
+      "page": "https://www.spriters-resource.com/pc_computer/deltarune/asset/110469/",
+      "sha256": "799ec7cf0eeec42f390cbe6cbfbc76a4b2efa9629ac070cea381d60fa114f6f9",
+      "description": "Original Deltarune game sprites compiled in a PC/Computer sheet, not Custom/Edited artwork."
+    },
+    {
+      "name": "susie-original-sheet",
+      "url": "https://www.spriters-resource.com/media/assets/107/110471.png?updated=1767747132",
+      "page": "https://www.spriters-resource.com/pc_computer/deltarune/asset/110471/",
+      "sha256": "fe6157a02b4b45a70bd10853a1d447afbc1c749593d1b216e2d488e0b9ea87e2",
+      "description": "Original Deltarune game sprites compiled in a PC/Computer sheet, not Custom/Edited artwork."
+    }
+  ],
+  "weather-battle-hosts-sheet.png": {
+    "file": "sources/weather-battle-hosts-sheet.png",
+    "page": "https://www.spriters-resource.com/pc_computer/deltarune/asset/273061/",
+    "url": "https://www.spriters-resource.com/media/assets/270/273061.png?updated=1755495120",
+    "sha256": "2527f6af5bffb5c4461d3c4ed28b242248f5a37cd51125072708eae9d849b47f",
+    "description": "Original game battle sprites, PC / Computer category, not custom artwork"
+  },
+  "weather-battle-attacks-sheet.png": {
+    "file": "sources/weather-battle-attacks-sheet.png",
+    "page": "https://www.spriters-resource.com/pc_computer/deltarune/asset/516984/",
+    "url": "https://www.spriters-resource.com/media/assets/498/516984.png?updated=1770257902",
+    "sha256": "b67ef87c5cac1e026702adeeb2bc506109761c2a05c57e3763e8aab15ca1284c",
+    "description": "Original game battle sprites, PC / Computer category, not custom artwork"
+  },
+  "gerson-sheet.png": {
+    "file": "sources/gerson-sheet.png",
+    "page": "https://www.spriters-resource.com/pc_computer/deltarune/asset/273902/page-2/",
+    "url": "https://www.spriters-resource.com/media/assets/271/273902.png?updated=1755495206",
+    "sha256": "d7f4f46fa9463be3f54183b9101fcc7bdb7a3b1748572855db8d9254b0ebaa37",
+    "description": "Original Darkner Gerson game speaking/laughing poses, PC / Computer category, not custom artwork",
+    "extraction": [
+      {
+        "name": "gerson-talk-0",
+        "cell": [
+          2,
+          65,
+          39,
+          108
+        ],
+        "background_colors": [
+          [
+            39,
+            116,
+            119
+          ],
+          [
+            55,
+            177,
+            182
+          ],
+          [
+            121,
+            230,
+            234
+          ]
+        ]
+      },
+      {
+        "name": "gerson-talk-1",
+        "cell": [
+          42,
+          65,
+          79,
+          108
+        ],
+        "background_colors": [
+          [
+            39,
+            116,
+            119
+          ],
+          [
+            55,
+            177,
+            182
+          ],
+          [
+            121,
+            230,
+            234
+          ]
+        ]
+      },
+      {
+        "name": "gerson-talk-2",
+        "cell": [
+          272,
+          65,
+          309,
+          108
+        ],
+        "background_colors": [
+          [
+            39,
+            116,
+            119
+          ],
+          [
+            55,
+            177,
+            182
+          ],
+          [
+            121,
+            230,
+            234
+          ]
+        ]
+      },
+      {
+        "name": "gerson-talk-3",
+        "cell": [
+          310,
+          65,
+          347,
+          108
+        ],
+        "background_colors": [
+          [
+            39,
+            116,
+            119
+          ],
+          [
+            55,
+            177,
+            182
+          ],
+          [
+            121,
+            230,
+            234
+          ]
+        ]
+      }
+    ]
+  }
+}

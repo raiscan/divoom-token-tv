@@ -1,4 +1,4 @@
-"""Optional original game animations stored locally alongside the personal art."""
+"""Original game animations from bundled fan art or a local artwork override."""
 import functools
 import hashlib
 import json

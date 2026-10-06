@@ -1,0 +1,177 @@
+[
+  {
+    "asset": "sans.png",
+    "source": "sans.png",
+    "crop": null,
+    "removed_background": [
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "uniform_divisor": 2
+  },
+  {
+    "asset": "papyrus.png",
+    "source": "papyrus.png",
+    "crop": null,
+    "removed_background": [
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "uniform_divisor": 2
+  },
+  {
+    "asset": "toriel.png",
+    "source": "toriel.png",
+    "crop": null,
+    "removed_background": [
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "uniform_divisor": 2
+  },
+  {
+    "asset": "blook.png",
+    "source": "blook.png",
+    "crop": null,
+    "removed_background": [
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "uniform_divisor": 2
+  },
+  {
+    "asset": "dog.png",
+    "source": "dog.png",
+    "crop": null,
+    "removed_background": [
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "uniform_divisor": 1
+  },
+  {
+    "asset": "dog-bark.png",
+    "source": "dog-bark.png",
+    "crop": null,
+    "removed_background": [
+      [
+        0,
+        0,
+        0
+      ]
+    ],
+    "uniform_divisor": 1
+  },
+  {
+    "asset": "kris.png",
+    "source": "battle4.png",
+    "crop": [
+      146,
+      92,
+      290,
+      248
+    ],
+    "removed_background": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        9,
+        0,
+        9
+      ],
+      [
+        17,
+        0,
+        17
+      ]
+    ],
+    "uniform_divisor": 2
+  },
+  {
+    "asset": "susie.png",
+    "source": "battle1.png",
+    "crop": [
+      148,
+      264,
+      328,
+      412
+    ],
+    "removed_background": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        36,
+        0,
+        36
+      ],
+      [
+        66,
+        0,
+        66
+      ]
+    ],
+    "uniform_divisor": 2
+  },
+  {
+    "asset": "ralsei.png",
+    "source": "battle4.png",
+    "crop": [
+      148,
+      444,
+      272,
+      622
+    ],
+    "removed_background": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        9,
+        0,
+        9
+      ],
+      [
+        17,
+        0,
+        17
+      ]
+    ],
+    "uniform_divisor": 2
+  },
+  {
+    "asset": "fountain-0.png through fountain-4.png",
+    "source": "fountain.gif",
+    "crop": null,
+    "uniform_divisor": 1
+  },
+  {
+    "asset": "weather-hosts-0.png through weather-hosts-4.png",
+    "source": "weather.gif",
+    "crop": null,
+    "uniform_divisor": 1,
+    "description": "Original transparent frames; uniformly scaled at render time."
+  }
+]

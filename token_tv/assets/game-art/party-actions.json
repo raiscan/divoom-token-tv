@@ -1,0 +1,114 @@
+{
+  "kris": {
+    "idle": [
+      "kris-idle-0",
+      "kris-idle-1",
+      "kris-idle-2",
+      "kris-idle-3",
+      "kris-idle-4",
+      "kris-idle-5"
+    ],
+    "act": [
+      "kris-act-0",
+      "kris-act-1",
+      "kris-act-2",
+      "kris-act-3",
+      "kris-act-4",
+      "kris-act-5",
+      "kris-act-6",
+      "kris-act-7",
+      "kris-act-8",
+      "kris-act-9",
+      "kris-act-10"
+    ],
+    "defend": [
+      "kris-defend-0",
+      "kris-defend-1",
+      "kris-defend-2",
+      "kris-defend-3",
+      "kris-defend-4",
+      "kris-defend-5"
+    ]
+  },
+  "susie": {
+    "idle": [
+      "susie-idle-0",
+      "susie-idle-1",
+      "susie-idle-2",
+      "susie-idle-3",
+      "susie-idle-4",
+      "susie-idle-5",
+      "susie-idle-6",
+      "susie-idle-7",
+      "susie-idle-8",
+      "susie-idle-9",
+      "susie-idle-10",
+      "susie-idle-11"
+    ],
+    "act": [
+      "susie-act-0",
+      "susie-act-1",
+      "susie-act-2",
+      "susie-act-3",
+      "susie-act-4",
+      "susie-act-5",
+      "susie-act-6",
+      "susie-act-7",
+      "susie-act-8",
+      "susie-act-9",
+      "susie-act-10",
+      "susie-act-11"
+    ],
+    "defend": [
+      "susie-defend-0",
+      "susie-defend-1",
+      "susie-defend-2",
+      "susie-defend-3"
+    ]
+  },
+  "ralsei": {
+    "idle": [
+      "ralsei-idle-0",
+      "ralsei-idle-1",
+      "ralsei-idle-2",
+      "ralsei-idle-3",
+      "ralsei-idle-4",
+      "ralsei-idle-5",
+      "ralsei-idle-6",
+      "ralsei-idle-7",
+      "ralsei-idle-8",
+      "ralsei-idle-9",
+      "ralsei-idle-10"
+    ],
+    "act": [
+      "ralsei-act-0",
+      "ralsei-act-1",
+      "ralsei-act-2",
+      "ralsei-act-3",
+      "ralsei-act-4",
+      "ralsei-act-5",
+      "ralsei-act-6",
+      "ralsei-act-7"
+    ],
+    "pacify": [
+      "ralsei-pacify-0",
+      "ralsei-pacify-1",
+      "ralsei-pacify-2",
+      "ralsei-pacify-3",
+      "ralsei-pacify-4",
+      "ralsei-pacify-5",
+      "ralsei-pacify-6",
+      "ralsei-pacify-7",
+      "ralsei-pacify-8"
+    ],
+    "defend": [
+      "ralsei-defend-0",
+      "ralsei-defend-1",
+      "ralsei-defend-2",
+      "ralsei-defend-3",
+      "ralsei-defend-4",
+      "ralsei-defend-5",
+      "ralsei-defend-6"
+    ]
+  }
+}

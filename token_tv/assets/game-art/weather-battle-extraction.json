@@ -1,0 +1,418 @@
+[
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-lanino-0",
+    "cell": [
+      2,
+      16,
+      39,
+      78
+    ],
+    "background": [
+      0,
+      0,
+      0
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-lanino-1",
+    "cell": [
+      41,
+      16,
+      69,
+      78
+    ],
+    "background": [
+      0,
+      0,
+      0
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-lanino-2",
+    "cell": [
+      71,
+      16,
+      108,
+      78
+    ],
+    "background": [
+      0,
+      0,
+      0
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-lanino-3",
+    "cell": [
+      110,
+      16,
+      147,
+      78
+    ],
+    "background": [
+      0,
+      0,
+      0
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-lanino-4",
+    "cell": [
+      149,
+      16,
+      177,
+      78
+    ],
+    "background": [
+      0,
+      0,
+      0
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-lanino-5",
+    "cell": [
+      179,
+      16,
+      216,
+      78
+    ],
+    "background": [
+      0,
+      0,
+      0
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-elnina-0",
+    "cell": [
+      479,
+      16,
+      522,
+      73
+    ],
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-elnina-1",
+    "cell": [
+      524,
+      16,
+      565,
+      73
+    ],
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-elnina-2",
+    "cell": [
+      567,
+      16,
+      610,
+      73
+    ],
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-elnina-3",
+    "cell": [
+      612,
+      16,
+      655,
+      73
+    ],
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-elnina-4",
+    "cell": [
+      657,
+      16,
+      698,
+      73
+    ],
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-hosts-sheet.png",
+    "name": "weather-elnina-5",
+    "cell": [
+      700,
+      16,
+      743,
+      73
+    ],
+    "background": [
+      255,
+      255,
+      255
+    ],
+    "removal": "boundary-connected only"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-symbol-moon",
+    "cell": [
+      1,
+      781,
+      27,
+      808
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-symbol-sun",
+    "cell": [
+      28,
+      781,
+      54,
+      808
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-symbol-rain",
+    "cell": [
+      55,
+      781,
+      81,
+      808
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-symbol-snow",
+    "cell": [
+      82,
+      781,
+      108,
+      808
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-symbol-drops",
+    "cell": [
+      109,
+      781,
+      135,
+      808
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-bullet-moon",
+    "cell": [
+      1,
+      291,
+      39,
+      331
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-bullet-drop",
+    "cell": [
+      1,
+      428,
+      21,
+      452
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-bullet-crystal",
+    "cell": [
+      18,
+      357,
+      32,
+      373
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-bullet-heart",
+    "cell": [
+      1,
+      747,
+      21,
+      769
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-bullet-sun",
+    "cell": [
+      1,
+      375,
+      33,
+      406
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-cloud-0",
+    "cell": [
+      1,
+      151,
+      49,
+      185
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-cloud-1",
+    "cell": [
+      50,
+      151,
+      100,
+      185
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-cloud-2",
+    "cell": [
+      102,
+      151,
+      150,
+      185
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  },
+  {
+    "source": "weather-battle-attacks-sheet.png",
+    "name": "weather-cloud-3",
+    "cell": [
+      151,
+      151,
+      198,
+      185
+    ],
+    "background": [
+      195,
+      134,
+      255
+    ],
+    "removal": "exact colour"
+  }
+]

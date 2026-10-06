@@ -1,0 +1,113 @@
+[
+  {
+    "character": "kris",
+    "source": "kris-original-sheet.png",
+    "source_sha256": "ecb4f9cae7f4052734a8bb2422b332cbf9ff0312b4f974a4ad352a2494d4c8c7",
+    "cell": [
+      223,
+      357,
+      255,
+      401
+    ],
+    "alpha_bounds": [
+      0,
+      13,
+      32,
+      44
+    ],
+    "canvas_size": [
+      36,
+      38
+    ],
+    "alignment": "bottom-centred; retains at least idle canvas height instead of enlarging clothes or knee pose",
+    "background_colors": [
+      [
+        138,
+        90,
+        157
+      ],
+      [
+        195,
+        134,
+        255
+      ]
+    ],
+    "assets": [
+      "kris-downed-0"
+    ]
+  },
+  {
+    "character": "susie",
+    "source": "susie-original-sheet.png",
+    "source_sha256": "fe6157a02b4b45a70bd10853a1d447afbc1c749593d1b216e2d488e0b9ea87e2",
+    "cell": [
+      125,
+      1288,
+      183,
+      1333
+    ],
+    "alpha_bounds": [
+      15,
+      0,
+      58,
+      44
+    ],
+    "canvas_size": [
+      53,
+      44
+    ],
+    "alignment": "bottom-centred; retains at least idle canvas height instead of enlarging clothes or knee pose",
+    "background_colors": [
+      [
+        138,
+        90,
+        157
+      ],
+      [
+        195,
+        134,
+        255
+      ]
+    ],
+    "assets": [
+      "susie-downed-0"
+    ]
+  },
+  {
+    "character": "ralsei",
+    "source": "ralsei-original-sheet.png",
+    "source_sha256": "799ec7cf0eeec42f390cbe6cbfbc76a4b2efa9629ac070cea381d60fa114f6f9",
+    "cell": [
+      83,
+      2803,
+      164,
+      2851
+    ],
+    "alpha_bounds": [
+      7,
+      35,
+      36,
+      47
+    ],
+    "canvas_size": [
+      47,
+      43
+    ],
+    "alignment": "bottom-centred; retains at least idle canvas height instead of enlarging clothes or knee pose",
+    "background_colors": [
+      [
+        138,
+        90,
+        157
+      ],
+      [
+        195,
+        134,
+        255
+      ]
+    ],
+    "assets": [
+      "ralsei-downed-0"
+    ]
+  }
+]

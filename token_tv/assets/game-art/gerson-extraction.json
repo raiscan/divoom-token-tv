@@ -1,0 +1,113 @@
+{
+  "file": "sources/gerson-sheet.png",
+  "page": "https://www.spriters-resource.com/pc_computer/deltarune/asset/273902/page-2/",
+  "url": "https://www.spriters-resource.com/media/assets/271/273902.png?updated=1755495206",
+  "sha256": "d7f4f46fa9463be3f54183b9101fcc7bdb7a3b1748572855db8d9254b0ebaa37",
+  "description": "Original Darkner Gerson game speaking/laughing poses, PC / Computer category, not custom artwork",
+  "extraction": [
+    {
+      "name": "gerson-talk-0",
+      "cell": [
+        2,
+        65,
+        39,
+        108
+      ],
+      "background_colors": [
+        [
+          39,
+          116,
+          119
+        ],
+        [
+          55,
+          177,
+          182
+        ],
+        [
+          121,
+          230,
+          234
+        ]
+      ]
+    },
+    {
+      "name": "gerson-talk-1",
+      "cell": [
+        42,
+        65,
+        79,
+        108
+      ],
+      "background_colors": [
+        [
+          39,
+          116,
+          119
+        ],
+        [
+          55,
+          177,
+          182
+        ],
+        [
+          121,
+          230,
+          234
+        ]
+      ]
+    },
+    {
+      "name": "gerson-talk-2",
+      "cell": [
+        272,
+        65,
+        309,
+        108
+      ],
+      "background_colors": [
+        [
+          39,
+          116,
+          119
+        ],
+        [
+          55,
+          177,
+          182
+        ],
+        [
+          121,
+          230,
+          234
+        ]
+      ]
+    },
+    {
+      "name": "gerson-talk-3",
+      "cell": [
+        310,
+        65,
+        347,
+        108
+      ],
+      "background_colors": [
+        [
+          39,
+          116,
+          119
+        ],
+        [
+          55,
+          177,
+          182
+        ],
+        [
+          121,
+          230,
+          234
+        ]
+      ]
+    }
+  ]
+}

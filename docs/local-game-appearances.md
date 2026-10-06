@@ -1,6 +1,6 @@
-# Personal Undertale and Deltarune appearances
+# Undertale and Deltarune fan appearances
 
-Two optional local faces are installed on this computer:
+Two unofficial fan appearances are included with this adaptation:
 
 - **Undertale · Determination**: white battle boxes, the red SOUL, official Sans,
   Papyrus and Toriel portraits, a glinting save point and the barking Annoying Dog.
@@ -90,20 +90,33 @@ face over the uploaded animation. The phone token remains in its private file.
 The dashboard lists each as **Local**. Preview does not apply it to the device.
 The renderer code is available in the public
 [Times Gate adaptation](https://github.com/raiscan/divoom-token-tv).
-The original game artwork remains local and is not distributed with the code.
+Selected original game sprites and animation frames are bundled with the code,
+with separate artwork ownership and source credits.
 
 ## Artwork and provenance
 
-Downloaded artwork and derived sprites live outside the repository at:
+Selected derived sprites, animation manifests and provenance records are bundled at:
 
-`~/.local/share/token-tv/local-games/`
+`token_tv/assets/game-art/`
 
-`TOKEN_TV_LOCAL_ART` can override that directory. The default directory contains
-`sources/`, `sprites/`, `sources.json` with original URLs and SHA-256 checksums,
-and `extraction.json` with crop and background-removal details. The extraction
-scripts are saved there for local maintenance. No artwork is downloaded while
-rendering or running the service. A face is listed only when all its required
-sprite files are present. Keep those files in place while the face is selected.
+They are included in Python packages, so fresh installations have both game faces,
+ACT/DOWN animations, Gerson, and battle-weather assets without downloading anything.
+The [artwork notice](../token_tv/assets/game-art/NOTICE.md) credits the rights holders,
+identifies this as an unofficial, non-commercial fan project, and excludes the game
+artwork from the software's MIT license. No official endorsement or artwork license
+is asserted.
+
+`TOKEN_TV_LOCAL_ART` can override the entire artwork directory. Complete existing
+installations under `~/.local/share/token-tv/local-games/` are used automatically,
+preserving their local artwork. An explicit override is respected even if incomplete;
+a game face is listed only when its required base sprite files are present.
+
+The bundled directory contains `sprites/`, `sources.json` with original URLs and
+source SHA-256 checksums, extraction records with crop/background-removal details,
+and `sprite-checksums.json` for every bundled PNG. Full source sheets, inspection
+images and extraction scripts remain in the original local workspace; references
+to `sources/` identify those original inputs. No artwork is downloaded while
+rendering or running the service.
 
 The original weather, fountain and static party artwork comes from official game
 websites. Additional action frames are original game sprites from the **PC / Computer**
@@ -122,15 +135,16 @@ sprite sheets at The Spriters Resource, separate from its **Custom / Edited** ca
   original Chapter 3 game sprites. The game's forecast-card symbols, moon and cloud
   mascots, and rain/crystal/heart projectiles guide the arena design. Exact source
   crops and background removal are recorded in `weather-battle-extraction.json`;
-  `extract-weather-battle.py` keeps the extraction repeatable outside Git. Background
+  the original local `extract-weather-battle.py` keeps extraction repeatable. Background
   removal on the host sprites is limited to boundary-connected background pixels,
   preserving internal white/black details.
 - [Kris](https://www.spriters-resource.com/pc_computer/deltarune/asset/110448/),
   [Susie](https://www.spriters-resource.com/pc_computer/deltarune/asset/110471/) and
   [Ralsei](https://www.spriters-resource.com/pc_computer/deltarune/asset/110469/): original
   Chapters 1–2 battle animations. Original sheets, their URLs/checksums, extracted
-  frames, action sequences and exact cell crops remain in the local artwork directory,
-  in `sources.json`, `party-actions.json` and `party-actions-extraction.json`.
+  frames, action sequences and exact cell crops are recorded in bundled
+  `sources.json`, `party-actions.json` and `party-actions-extraction.json`.
+  Complete original source sheets remain in the original local workspace.
   Original DOWN cells from these same sheets are recorded in
   `party-downed-extraction.json`, with source checksums, background removal and
   alignment within the normal idle canvas. This keeps kneeling poses shorter and
@@ -138,10 +152,12 @@ sprite sheets at The Spriters Resource, separate from its **Custom / Edited** ca
 - [Old Man Gerson](https://www.spriters-resource.com/pc_computer/deltarune/asset/273902/page-2/):
   original Darkner speaking/laughing poses from the PC / Computer game sheet.
   `gerson-extraction.json` records the original URL, checksum, four source cells
-  and exact background colours removed. The source and derived art remain local.
+  and exact background colours removed. The selected derived poses are bundled;
+  the full source sheet remains local.
 
-Game artwork remains © Toby Fox and the games' artists. It is outside Git and
-is not included in the repository's software license or redistributed.
+Game artwork remains © Toby Fox, Temmie Chang and the games' artists. The selected
+frames are included as part of this unofficial, non-commercial fan project and
+are excluded from the repository's software license; see the artwork notice above.
 Sprites are cropped and uniformly scaled with nearest-neighbour sampling.
 The meters, layout, SOUL and save-point animation are drawn by the renderer.
 
@@ -154,7 +170,9 @@ node --check token_tv/web/app.js
 
 `tests/test_local_games.py` uses synthetic artwork in temporary directories to
 check optional installation, all panel roles, unknown/zero/stale readings,
-local-only loading and native animation payloads. `tests/test_weather.py` covers
+offline loading and native animation payloads. `tests/test_bundled_art.py` checks
+fresh-install availability, overrides, animation references, and sprite checksums.
+`tests/test_weather.py` covers
 forecast normalization, zero/unknown/stale states, outages, date selection, private
 location-bound caching, paired quota windows, account rotation, and the full 16-frame
 weather transport and preview, and shuffled original action clips with a 48-frame

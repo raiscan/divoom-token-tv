@@ -1,7 +1,7 @@
-"""Personal Undertale / Deltarune faces using optional, local official artwork.
+"""Unofficial Undertale / Deltarune fan faces using bundled or local game artwork.
 
-Art remains outside Git. The local sources.json and extraction.json record its
-provenance. Deltarune percentages/bars show quota remaining; Undertale shows used.
+The artwork's NOTICE.md, sources.json and extraction records preserve its credits
+and provenance. Deltarune shows quota remaining; Undertale shows quota used.
 """
 import functools
 import math

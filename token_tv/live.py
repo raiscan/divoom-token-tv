@@ -118,6 +118,19 @@ def handler(store, preferences=None):
                 body = json.dumps(theme_payload()).encode()
             elif path == '/display':
                 body = json.dumps(display).encode()
+            elif path == '/display/fallback.zip':
+                style = parse_qs(url.query).get('style', [display['style']])[0]
+                if display.get('device_type') != 'times-gate':
+                    self.send_error(400, 'Offline fallback requires a Times Gate')
+                    return
+                from token_tv.fallback import fallback_zip
+                try:
+                    body = fallback_zip(style, display.get('forecast_city', ''))
+                except ValueError:
+                    self.send_error(400, 'Choose Undertale or Deltarune for an offline fallback')
+                    return
+                self.reply(200, body, 'application/zip', filename='times-gate-fallback.zip')
+                return
             elif path == "/health":
                 body = json.dumps({"status": "ok", "updated_at": snapshot["updated_at"]}).encode()
             else:
@@ -125,10 +138,12 @@ def handler(store, preferences=None):
                 return
             self.reply(200, body, content_type)
 
-        def reply(self, status, body, content_type='application/json; charset=utf-8'):
+        def reply(self, status, body, content_type='application/json; charset=utf-8', filename=None):
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
+            if filename:
+                self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.end_headers()
@@ -184,6 +199,7 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8787)
     parser.add_argument("--once", action="store_true")
+    parser.add_argument("--device-url", help="Override the saved clock HTTP address for this run")
     parser.add_argument("--output", help="Write a normalized snapshot rather than stdout")
     parser.add_argument("--state-dir", default=".runtime")
     parser.add_argument("--restore-display", action="store_true")
@@ -202,6 +218,11 @@ def main():
     except ValueError:
         parser.error('Choose distinct Times Gate screen numbers from 1 to 5')
     config = load_config(args.config)
+    if args.device_url:
+        try:
+            config['device_url'] = PhotoDisplay(args.device_url).base_url
+        except ValueError:
+            parser.error('Use a plain http:// clock address without credentials or a path')
     if config.get("font"):
         os.environ["TOKEN_TV_FONT"] = config["font"]
     state_dir = Path(args.state_dir)

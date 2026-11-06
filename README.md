@@ -125,6 +125,30 @@ and [source credits](token_tv/assets/game-art/sources.json).
 [Game appearances guide](docs/local-game-appearances.md) covers provenance,
 animation behaviour, local artwork overrides, and weather options.
 
+## Offline fallback after a reboot
+
+The live LAN animation stream is temporary. TokenTV resends it while the computer
+runs, but those uploads do not establish a saved startup layout on the clock.
+
+In **Clock display**, choose Undertale or Deltarune and select **Download offline
+screens**. Or export the same pack without signing in or connecting a device:
+
+```sh
+.venv/bin/token-tv fallback --style deltarune --city Poole --out times-gate-fallback
+```
+
+The pack contains five native GIFs and a preview. It preserves the characters and
+animations with **OFFLINE** labels, unknown quotas, and no frozen clock or forecast.
+Import the numbered GIFs into a saved independent-screen layout **if your Divoom
+app provides image/GIF import**, then save it with the app's Save/checkmark control.
+Stop TokenTV and power-cycle the clock to verify that layout returns with the
+computer off. **Exporting or downloading the pack does not save it on the clock.**
+An app/firmware save step and a physical reboot test are still required.
+
+[Offline fallback guide](docs/times-gate.md#offline-fallback-with-the-computer-off)
+covers the limits and the distinction between a saved layout and a temporary API
+upload. A router DHCP reservation also prevents the clock changing IP after reboot.
+
 ## Try it without a clock or accounts
 
 ```sh

@@ -243,6 +243,8 @@ function paintClock(forceImage = false) {
  if ($('#gallery').dataset.device !== device) {$('#gallery').dataset.device = device; paintThemes()}
  $('#clock-dimensions').textContent = timesGate ? displayInfo?.panels?.length < 5 ? 'TokenTV screens ' + displayInfo.panels.join(', ') + ' · Other screens use Divoom faces; their live contents cannot be previewed here.' : 'Five 128 × 128 screens · Each appearance renders at native resolution.' : '240 × 240 · The web appearance is separate from your clock style.';
  $('#local-token-form').hidden = DEMO || !displayInfo?.token_entry || (displayInfo.token_configured && displayInfo.status !== 'auth_required');
+ $('#offline-fallback').hidden = DEMO || !timesGate || !['undertale', 'deltarune'].includes(style);
+ $('#download-fallback').href = '/display/fallback.zip?style=' + encodeURIComponent(style || 'deltarune');
  $('#forecast-source').hidden = !displayInfo?.forecast_city;
  $('#forecast-city').textContent = displayInfo?.forecast_city || '';
  if (displayInfo?.weather_appearance) $('#clock-dimensions').textContent = 'Screens 1–4: TokenTV · Screen 5: Elnina & Lanino weather. The preview shows all five screens.';

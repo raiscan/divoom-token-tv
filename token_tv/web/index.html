@@ -63,6 +63,10 @@
       <select id="clock-style" class="control"></select>
       <button class="control primary" id="apply" type="button" disabled>Apply to clock</button>
       <p id="display-state" role="status">Loading clock status</p>
+      <div id="offline-fallback" hidden>
+        <a class="control" id="download-fallback" href="/display/fallback.zip" download="times-gate-fallback.zip">Download offline screens</a>
+        <p class="quiet">Import and save these OFFLINE animations in the Divoom phone app. Downloading alone does not save them on the clock.</p>
+      </div>
       <form id="local-token-form" hidden>
         <label for="local-token">Divoom Local Token</label>
         <input class="control" id="local-token" type="password" inputmode="numeric" autocomplete="off" required pattern="[0-9]+" placeholder="From device Settings on your phone">

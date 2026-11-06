@@ -4,6 +4,7 @@
     token-tv setup     write a credential-free config (never overwrites one)
     token-tv doctor    check CLIs and login files (--live asks each provider)
     token-tv demo      render every clock face with sample data
+    token-tv fallback  export offline screens for a saved Divoom app layout
     token-tv connect   sign an account in with its official CLI
     token-tv run       start the dashboard and drive the clock
 """
@@ -216,6 +217,19 @@ def demo(args):
     return 0
 
 
+def fallback(args):
+    from token_tv.fallback import export_fallback
+    try:
+        destination = export_fallback(args.out, args.style, args.city)
+    except (OSError, ValueError) as error:
+        print(f'Could not export fallback: {error}', file=sys.stderr)
+        return 1
+    print(f'Offline fallback: {destination / "times-gate-fallback.zip"}')
+    print('Import and save the GIFs in the Divoom app, then verify with the computer off.')
+    print('This export has not saved a fallback on the clock.')
+    return 0
+
+
 def start(args):
     """One command: find signed-in CLIs, confirm their emails, ask for the clock, then run."""
     from token_tv.sources import logged_in_email
@@ -306,6 +320,10 @@ def main(argv=None):
     d = commands.add_parser('demo', help='render every clock face with sample data')
     d.add_argument('--out', default='token-tv-demo', help='output folder (default: %(default)s)')
     d.add_argument('--scale', type=int, default=3, help='extra enlarged PNG copy (1 = none)')
+    f = commands.add_parser('fallback', help='export offline screens for import into a saved Divoom app layout')
+    f.add_argument('--out', default='times-gate-fallback', help='new output folder')
+    f.add_argument('--style', choices=('undertale', 'deltarune'), default='deltarune')
+    f.add_argument('--city', default='', help='weather panel label; no forecast is exported')
     commands.add_parser('connect', parents=[config], help='log an account in with its official CLI',
                         add_help=False)
     commands.add_parser('run', parents=[config], help='start the dashboard and drive the clock',
@@ -327,7 +345,7 @@ def main(argv=None):
     if args.command is None:
         parser.print_help()
         return 0
-    return {'setup': setup, 'doctor': doctor, 'demo': demo, 'start': start}[args.command](args)
+    return {'setup': setup, 'doctor': doctor, 'demo': demo, 'start': start, 'fallback': fallback}[args.command](args)
 
 
 if __name__ == '__main__':

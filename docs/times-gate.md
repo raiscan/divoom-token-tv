@@ -53,6 +53,65 @@ HTTP success alone is insufficient: the adapter also checks Divoom's `error_code
 The service can report successful delivery, but the hardware itself has no screenshot API;
 confirm that the panels are visible on the physical device.
 
+## Offline fallback with the computer off
+
+The `Draw/SendHttpGif` path streams the current panels. It does not establish a
+persistent startup layout. The existing controller notices a changed picture ID
+and resends panels on its next minute tick while the computer is running. A new
+DHCP address can prevent that recovery; reserve the clock's IP in your router.
+
+For a computer-independent fallback, export the fan-theme animations:
+
+```sh
+.venv/bin/token-tv fallback --style deltarune --city Poole --out times-gate-fallback
+```
+
+The command needs no account configuration, provider login, network request, or
+Local Token. It creates `screen-1.gif` through `screen-5.gif`, `preview.png`,
+`SAVE-ON-CLOCK.txt`, and `times-gate-fallback.zip`. Existing output files are never
+overwritten. Undertale is also supported with `--style undertale`. The profile
+uses Claude and Codex screens, a decorative save-point/fountain panel, party
+status, and a weather-host panel in Deltarune. It has no saved clock time,
+percentages, reset deadlines, or forecast; OFFLINE labels distinguish it from live
+TokenTV. Game artwork keeps its original ownership and credits.
+
+The dashboard offers the same ZIP under **Clock display → Download offline
+screens** when a Times Gate and one of the two fan themes are selected. Downloading
+only generates files; it does not send device commands or modify a saved layout.
+
+1. Transfer the five GIFs to the phone running the Divoom app.
+2. In the Times Gate independent-screen editor, use custom image/GIF import if
+   that option exists in your app. Assign files to screens in numeric order.
+3. Save the layout with the app's Save/checkmark and select it as the normal
+   device display. Merely previewing an animation is insufficient.
+4. Stop TokenTV and power-cycle the Times Gate. Verify the fallback on the
+   physical screens with the computer off, then restart TokenTV for live data.
+
+Menu names, import availability, and saved-layout behaviour depend on the app and
+firmware. If the app does not offer import, the export is prepared but installation
+remains incomplete; do not treat it as persisted. There is no verified direct-save
+command in this adapter. On the tested Hardware 400 device, both documented
+`Device/PlayGifLCDs` and `Device/PlayGif` acknowledged the local download request
+but fetched none of the served fallback files; no reboot persistence was established.
+The adapter does not substitute the PIXOO64-only `Device/SaveTFGif` command.
+
+Sources: [Divoom GIF playback API](https://docin.divoom-gz.com/web/#/5/129),
+[all-screen GIF API](https://docin.divoom-gz.com/web/#/5/130), and
+[Divoom's saving guidance](https://divoom.com/pages/faqs).
+
+If the clock's address changes, the runner accepts a temporary address override
+without rewriting the saved account metadata:
+
+```sh
+.venv/bin/token-tv run --config ~/.config/token-tv/times-gate.json \
+  --device-url http://192.168.0.51 \
+  --times-gate-layout accounts \
+  --local-token-file ~/.config/token-tv/times-gate-local-token.json
+```
+
+Keep your existing forecast/screen options when using this override. A service
+must include the override in its launch command, or use a reserved device IP.
+
 ## This installation
 
 The stable checkout is `/home/farrell/code/projects/divoom-token-tv` and its public remote
